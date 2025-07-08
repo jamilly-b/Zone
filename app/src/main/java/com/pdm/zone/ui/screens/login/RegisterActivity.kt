@@ -117,7 +117,7 @@ fun RegisterPage(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.continue_google),
+                painter = painterResource(id = R.drawable.logo_google),
                 contentDescription = "Google logo",
                 modifier = Modifier.size(24.dp)
             )

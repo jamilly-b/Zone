@@ -12,7 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Zone"
         tools:targetApi="31">
-
+        <activity
+            android:name=".ui.screens.home.Home"
+            android:exported="false"
+            android:label="@string/title_activity_home"
+            android:theme="@style/Theme.Zone" />
         <activity
             android:name=".ui.screens.login.LoginActivity"
             android:exported="true"
@@ -20,22 +24,15 @@
             android:theme="@style/Theme.Zone">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ui.screens.login.RegisterActivity"
             android:exported="false"
             android:label="@string/title_activity_register"
             android:theme="@style/Theme.Zone" />
-
-        <activity
-            android:name=".ui.screens.Home"
-            android:exported="false"
-            android:label="@string/title_activity_home"
-            android:theme="@style/Theme.Zone" />
-
         <activity
             android:name=".MainActivity"
             android:exported="false"

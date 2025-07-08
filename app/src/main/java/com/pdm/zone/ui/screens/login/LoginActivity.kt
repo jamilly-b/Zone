@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import com.pdm.zone.R
+import com.pdm.zone.ui.screens.home.Home
+import com.pdm.zone.ui.screens.home.HomePage
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,7 +105,7 @@ fun LoginPage(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.continue_google),
+                painter = painterResource(id = R.drawable.logo_google),
                 contentDescription = "Google logo",
                 modifier = Modifier.size(24.dp)
             )
