@@ -43,20 +43,20 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             ZoneTheme {
                 Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = { Text("Bem-vindo/a!") },
-                            actions = {
-                                IconButton( onClick = { finish() } ) {
-                                    Icon(
-                                        imageVector =
-                                            Icons.AutoMirrored.Filled.ExitToApp,
-                                        contentDescription = "Localized description"
-                                    )
-                                }
-                            }
-                        )
-                    },
+//                    topBar = {
+//                        TopAppBar(
+//                            title = { Text("Bem-vindo/a!") },
+//                            actions = {
+//                                IconButton( onClick = { finish() } ) {
+//                                    Icon(
+//                                        imageVector =
+//                                            Icons.AutoMirrored.Filled.ExitToApp,
+//                                        contentDescription = "Localized description"
+//                                    )
+//                                }
+//                            }
+//                        )
+//                    },
                     bottomBar = {
                         val items = listOf(
                             BottomNavItem.HomeButton,
@@ -66,7 +66,9 @@ class MainActivity : ComponentActivity() {
                         BottomNavBar(navController = navController, items)
                     },
                     floatingActionButton = {
-                        FloatingActionButton(onClick = { }) {
+                        FloatingActionButton(onClick = {
+                            navController.navigate("eventRegister")
+                        }) {
                             Icon(Icons.Default.Add, contentDescription = "Adicionar")
                         }
                     }
