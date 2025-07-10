@@ -47,6 +47,7 @@ fun ProfilePage() {
 
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Próximos eventos", "Eventos passados")
+    val currentUserId = "1"
 
     LazyColumn(
         modifier = Modifier
@@ -61,8 +62,17 @@ fun ProfilePage() {
             ProfileStats(user = user)
         }
 
-        item {
-            ProfileActions()
+        if (user.uid == currentUserId) {
+            item { ProfileActions() }
+        }
+        else{
+            item {
+                FollowActions(
+                    user = user,
+                    currentUserId = currentUserId,
+                    onFollowChanged = { followed -> /* Atualiza no baco de dados */}
+                )
+            }
         }
 
         item {
@@ -209,6 +219,35 @@ private fun ProfileActions() {
                 fontSize = 14.sp
             )
         }
+    }
+}
+
+@Composable
+private fun FollowActions(
+    user: User,
+    currentUserId: String,
+    onFollowChanged: (Boolean) -> Unit
+) {
+    var isFollowing by remember { mutableStateOf(user.followers.contains(currentUserId)) }
+
+    Button(
+        onClick = {
+            isFollowing = !isFollowing
+            onFollowChanged(isFollowing)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isFollowing) Color.Gray else Primary
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = if (isFollowing) "Deixar de seguir" else "Seguir",
+            color = Color.White,
+            fontSize = 14.sp
+        )
     }
 }
 
