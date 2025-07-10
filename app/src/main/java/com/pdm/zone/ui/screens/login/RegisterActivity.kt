@@ -27,6 +27,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import com.pdm.zone.ui.screens.user.UserProfileEdit
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,13 +96,12 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 if (password == repeatPassword) {
-                    Toast.makeText(activity, "Cadastro realizado!", Toast.LENGTH_SHORT).show()
-                    activity?.startActivity(Intent(activity, LoginActivity::class.java))
+                        activity?.startActivity(Intent(activity, UserProfileEdit::class.java))
                 } else {
                     Toast.makeText(activity, "As senhas não coincidem!", Toast.LENGTH_SHORT).show()
                 }
             },
-            enabled = email.isNotEmpty() && password.isNotEmpty() && repeatPassword.isNotEmpty(),
+            enabled = email.isNotEmpty() && password.isNotEmpty() && repeatPassword.isNotEmpty() && repeatPassword == password,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Criar conta", fontWeight = FontWeight.Bold)

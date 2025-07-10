@@ -1,5 +1,7 @@
 package com.pdm.zone.ui.screens.user
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,11 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.pdm.zone.data.model.User
+import com.pdm.zone.ui.screens.login.LoginActivity
 import com.pdm.zone.ui.theme.Primary
 
 @Composable
 fun ProfilePage() {
-
     val user = User(
         uid = "1",
         name = "Nome Sobrenome",
@@ -184,6 +187,8 @@ private fun StatItem(count: String, label: String) {
 
 @Composable
 private fun ProfileActions() {
+    val activity = LocalContext.current as? Activity
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,7 +196,9 @@ private fun ProfileActions() {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Button(
-            onClick = { /* Implementar edição de perfil */ },
+            onClick = {
+                activity?.startActivity(Intent(activity, LoginActivity::class.java))
+            },
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Primary
