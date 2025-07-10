@@ -18,7 +18,7 @@ fun MainNavHost(
 ) {
     NavHost(navController, startDestination = "home") {
         composable("home") {
-            HomePage(navController)
+            HomePage(navController, eventViewModel)
         }
 
         composable("list") {

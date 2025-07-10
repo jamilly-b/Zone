@@ -43,26 +43,23 @@ fun EventDetailsPage(
     onConfirmPresence: (Event) -> Unit = {}
 ) {
     val currentUser by eventViewModel.currentUser
-
-    var displayEvent by remember {
-        mutableStateOf(
-            event ?: Event(
-                id = 1,
-                title = "Lorem ipsum dolor",
-                location = "Rua XXX, Várzea - Recife, PE",
-                dateTime = "21 de jun | 19h - 23h",
-                description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquam in sit amet libero.",
-                imageRes = android.R.drawable.ic_menu_gallery,
-                category = "Evento",
-                attendees = listOf(),
-                confirmedCount = 30,
-                date = "21 de jun",
-                startTime = "19h",
-                endTime = "23h",
-                creatorId = "usuario_criador"
-            )
-        )
-    }
+    
+    // Buscar o evento mais atualizado do ViewModel
+    val currentEvent = eventViewModel.getEventById(eventId) ?: event ?: Event(
+        id = 1,
+        title = "Lorem ipsum dolor",
+        location = "Rua XXX, Várzea - Recife, PE",
+        dateTime = "21 de jun | 19h - 23h",
+        description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquam in sit amet libero.",
+        imageRes = android.R.drawable.ic_menu_gallery,
+        category = "Evento",
+        attendees = listOf(),
+        confirmedCount = 30,
+        date = "21 de jun",
+        startTime = "19h",
+        endTime = "23h",
+        creatorId = "usuario_criador"
+    )
 
     Column(
         modifier = Modifier
@@ -103,7 +100,7 @@ fun EventDetailsPage(
                 .padding(16.dp)
         ) {
             Text(
-                text = displayEvent.title,
+                text = currentEvent.title,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = Primary
@@ -118,23 +115,21 @@ fun EventDetailsPage(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
-                        text = "${displayEvent.confirmedCount} Confirmados",
+                        text = "${currentEvent.confirmedCount} Confirmados",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                 }
 
                 // Confirmar presença
-                val isConfirmed = currentUser.favoriteEvents.contains(displayEvent.id.toString())
+                val isConfirmed = currentUser.favoriteEvents.contains(currentEvent.id.toString())
 
                 IconButton(
                     onClick = {
                         if (isConfirmed) {
-                            eventViewModel.unconfirmEventPresence(displayEvent)
-                            displayEvent = displayEvent.copy(confirmedCount = displayEvent.confirmedCount - 1)
+                            eventViewModel.unconfirmEventPresence(currentEvent)
                         } else {
-                            eventViewModel.confirmEventPresence(displayEvent)
-                            displayEvent = displayEvent.copy(confirmedCount = displayEvent.confirmedCount + 1)
+                            eventViewModel.confirmEventPresence(currentEvent)
                         }
                     }
                 ) {
@@ -149,7 +144,7 @@ fun EventDetailsPage(
 
             // Descrição
             Text(
-                text = displayEvent.description,
+                text = currentEvent.description,
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp,
@@ -158,7 +153,7 @@ fun EventDetailsPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            EventInfoSection(event = displayEvent)
+            EventInfoSection(event = currentEvent)
 
             Spacer(modifier = Modifier.height(16.dp))
         }
