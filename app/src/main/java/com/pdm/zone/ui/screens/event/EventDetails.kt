@@ -1,5 +1,5 @@
-package com.pdm.zone.ui.screens.event
-
+import com.pdm.zone.data.model.User
+import com.pdm.zone.viewmodel.EventViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,45 +24,57 @@ import androidx.navigation.NavHostController
 import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.theme.Primary
 import com.pdm.zone.ui.theme.Secondary
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventDetailsPage (
+fun EventDetailsPage(
     eventId: Int,
     navController: NavHostController,
     event: Event? = null,
+    eventViewModel: EventViewModel,
     onBackClick: () -> Unit = {},
     onConfirmPresence: (Event) -> Unit = {}
 ) {
-    val displayEvent = event ?: Event(
-        id = 1,
-        title = "Lorem ipsum dolor",
-        location = "Rua XXX, Várzea - Recife, PE",
-        dateTime = "21 de jun | 19h - 23h",
-        description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquam in sit amet libero. Sed tempor odio eget elit pharetra, et eleifend lorem tempus. Pellentesque lobortis venenatis sapien at blandit. Quisque maximus urna bibendum efficitur lacinia. Nam accumsan mauris in ante tempus dictum.",
-        imageRes = android.R.drawable.ic_menu_gallery,
-        category = "Evento",
-        attendees = listOf("João", "Maria", "Pedro", "Ana", "Carlos", "Lucia", "Roberto", "Fernanda"),
-        confirmedCount = 30,
-        interestedCount = 15,
-        date = "21 de jun",
-        startTime = "19h",
-        endTime = "23h",
-        creatorId = "Nome usuário"
-    )
+    val currentUser by eventViewModel.currentUser
+
+    var displayEvent by remember {
+        mutableStateOf(
+            event ?: Event(
+                id = 1,
+                title = "Lorem ipsum dolor",
+                location = "Rua XXX, Várzea - Recife, PE",
+                dateTime = "21 de jun | 19h - 23h",
+                description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquam in sit amet libero.",
+                imageRes = android.R.drawable.ic_menu_gallery,
+                category = "Evento",
+                attendees = listOf(),
+                confirmedCount = 30,
+                date = "21 de jun",
+                startTime = "19h",
+                endTime = "23h",
+                creatorId = "usuario_criador"
+            )
+        )
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header com imagem
+        // Imagem e botão de voltar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp)
         ) {
-            // Imagem
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -69,11 +82,10 @@ fun EventDetailsPage (
                     .background(Color.Gray.copy(alpha = 0.3f))
             )
 
-            // Barra de navegação
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = {navController.popBackStack()}) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Voltar",
@@ -81,53 +93,54 @@ fun EventDetailsPage (
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
 
-        // Conteúdo principal
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Título do evento
             Text(
                 text = displayEvent.title,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
-                color = Primary,
-                modifier = Modifier.padding(bottom = 1.dp)
+                color = Primary
             )
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 2.dp),
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Confirmados e interessados
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
                         text = "${displayEvent.confirmedCount} Confirmados",
-                        fontSize = 12.sp,
-                        color = Secondary
-                    )
-                    Text(
-                        text = "${displayEvent.interestedCount} Interessados",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                 }
 
-                // Favoritar
-                IconButton(onClick = { /* TO DO */ }) {
+                // Confirmar presença
+                val isConfirmed = currentUser.favoriteEvents.contains(displayEvent.id.toString())
+
+                IconButton(
+                    onClick = {
+                        if (isConfirmed) {
+                            eventViewModel.unconfirmEventPresence(displayEvent)
+                            displayEvent = displayEvent.copy(confirmedCount = displayEvent.confirmedCount - 1)
+                        } else {
+                            eventViewModel.confirmEventPresence(displayEvent)
+                            displayEvent = displayEvent.copy(confirmedCount = displayEvent.confirmedCount + 1)
+                        }
+                    }
+                ) {
                     Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = "Favoritar",
+                        imageVector = if (isConfirmed) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = if (isConfirmed) "Desfavoritar" else "Favoritar",
                         tint = Primary,
                         modifier = Modifier.size(28.dp)
                     )
@@ -140,24 +153,14 @@ fun EventDetailsPage (
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp,
-                modifier = Modifier.padding(vertical = 5.dp)
+                modifier = Modifier.padding(vertical = 8.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Informações do evento
             EventInfoSection(event = displayEvent)
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Criado por
-//            displayEvent.createdBy?.let { creator ->
-//                Text(
-//                    text = "Criado por *$creator*",
-//                    fontSize = 12.sp,
-//                    color = Color.Gray
-//                )
-//            }
         }
     }
 }

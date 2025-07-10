@@ -27,24 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.pdm.zone.data.model.User
+import com.pdm.zone.data.model.Event
+import com.pdm.zone.viewmodel.EventViewModel
 import com.pdm.zone.ui.theme.Primary
 
 @Composable
-fun ProfilePage() {
-
-    val user = User(
-        uid = "1",
-        name = "Nome Sobrenome",
-        username = "Username",
-        photoUrl = null,
-        biography = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquet in sit amet nisl.",
-        birthday = "1990-01-01",
-        createdTime = "2023-01-01",
-        followers = listOf("1", "2", "3", "4"),
-        following = listOf("1", "3", "4", "5", "6", "7") ,
-        createdEvents = listOf("1", "3")
-    )
-
+fun ProfilePage(eventViewModel: EventViewModel) {
+    val user = eventViewModel.currentUser
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Próximos eventos", "Eventos passados")
     val currentUserId = "1"
@@ -82,6 +71,98 @@ fun ProfilePage() {
                 onTabSelected = { selectedTab = it }
             )
         }
+
+        // Mostrar eventos baseado na aba selecionada
+        when (selectedTab) {
+            0 -> {
+                // Próximos eventos
+                val upcomingEvents = eventViewModel.getUpcomingEvents()
+                items(upcomingEvents) { event ->
+                    EventCard(event = event)
+                }
+
+                if (upcomingEvents.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Nenhum evento confirmado",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+            1 -> {
+                // Eventos passados
+                val pastEvents = eventViewModel.getPastEvents()
+                items(pastEvents) { event ->
+                    EventCard(event = event)
+                }
+
+                if (pastEvents.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Nenhum evento passado",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EventCard(event: Event) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = event.title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = event.location,
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Text(
+                text = event.dateTime,
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = event.description,
+                fontSize = 14.sp,
+                color = Color.Black,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -102,21 +183,12 @@ private fun ProfileHeader(user: User) {
             contentAlignment = Alignment.Center
         ) {
             // Placeholder para foto do usuário
-            if (user.photoUrl != null) {
-                Text(
-                    text = user.name.first().toString(),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray
-                )
-            } else {
-                Text(
-                    text = user.name.first().toString(),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray
-                )
-            }
+            Text(
+                text = user.name.first().toString(),
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -157,9 +229,9 @@ private fun ProfileStats(user: User) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatItem(count = user.following.size.toString(), label = "Seguindo")
-        StatItem(count = user.followers.size.toString(), label = "Seguidores")
-        StatItem(count = user.createdEvents.size.toString(), label = "Eventos criados")
+        StatItem(count = user.following?.size?.toString() ?: "0", label = "Seguindo")
+        StatItem(count = user.followers?.size?.toString() ?: "0", label = "Seguidores")
+        StatItem(count = user.createdEvents?.size?.toString() ?: "0", label = "Eventos criados")
     }
 }
 
@@ -228,7 +300,7 @@ private fun FollowActions(
     currentUserId: String,
     onFollowChanged: (Boolean) -> Unit
 ) {
-    var isFollowing by remember { mutableStateOf(user.followers.contains(currentUserId)) }
+    var isFollowing by remember { mutableStateOf(user.followers?.contains(currentUserId) ?: false) }
 
     Button(
         onClick = {

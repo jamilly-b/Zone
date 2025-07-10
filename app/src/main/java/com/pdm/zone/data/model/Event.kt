@@ -10,7 +10,6 @@ data class Event(
     val category: String,
     val attendees: List<String> = emptyList(),
     val confirmedCount: Int = 0,
-    val interestedCount: Int = 0,
     val price: String? = null,
     val distance: String? = null,
     val startTime: String? = null,

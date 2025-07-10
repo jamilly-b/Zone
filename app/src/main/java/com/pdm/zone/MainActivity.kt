@@ -28,11 +28,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.pdm.zone.ui.nav.BottomNavBar
 import com.pdm.zone.ui.nav.BottomNavItem
 import com.pdm.zone.ui.nav.MainNavHost
 import com.pdm.zone.ui.theme.ZoneTheme
+import com.pdm.zone.viewmodel.EventViewModel
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -41,22 +43,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
+            val eventViewModel: EventViewModel = viewModel()
+
             ZoneTheme {
                 Scaffold(
-//                    topBar = {
-//                        TopAppBar(
-//                            title = { Text("Bem-vindo/a!") },
-//                            actions = {
-//                                IconButton( onClick = { finish() } ) {
-//                                    Icon(
-//                                        imageVector =
-//                                            Icons.AutoMirrored.Filled.ExitToApp,
-//                                        contentDescription = "Localized description"
-//                                    )
-//                                }
-//                            }
-//                        )
-//                    },
                     bottomBar = {
                         val items = listOf(
                             BottomNavItem.HomeButton,
@@ -74,11 +64,13 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        MainNavHost(navController = navController)
+                        MainNavHost(
+                            navController = navController,
+                            eventViewModel = eventViewModel
+                        )
                     }
                 }
             }
-
         }
     }
 }

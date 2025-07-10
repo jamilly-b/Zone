@@ -17,8 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pdm.zone.ui.theme.OnPrimary
 import com.pdm.zone.ui.theme.ZoneTheme
+import com.pdm.zone.viewmodel.EventViewModel
+
 
 class EventsList : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +30,9 @@ class EventsList : ComponentActivity() {
         setContent {
             ZoneTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ListPage()
+                    // Criar uma instância do ViewModel
+                    val eventViewModel: EventViewModel = viewModel()
+                    ListPage(eventViewModel = eventViewModel)
                 }
             }
         }
@@ -35,7 +40,7 @@ class EventsList : ComponentActivity() {
 }
 
 @Composable
-fun ListPage() {
+fun ListPage(eventViewModel: EventViewModel) {
     Column(
         modifier = Modifier.fillMaxSize()
             .background(Color.Red)
