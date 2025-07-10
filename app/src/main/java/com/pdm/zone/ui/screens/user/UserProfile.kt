@@ -1,53 +1,249 @@
 package com.pdm.zone.ui.screens.user
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pdm.zone.ui.theme.OnPrimary
-import com.pdm.zone.ui.theme.ZoneTheme
+import coil.compose.AsyncImage
+import com.pdm.zone.data.model.User
+import com.pdm.zone.ui.theme.Primary
 
-class UserProfile : ComponentActivity()  {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            ZoneTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ProfilePage()
-                }
-            }
+@Composable
+fun ProfilePage() {
+
+    val user = User(
+        uid = "1",
+        name = "Nome Sobrenome",
+        username = "Username",
+        photoUrl = null,
+        biography = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquet in sit amet nisl.",
+        birthday = "1990-01-01",
+        createdTime = "2023-01-01",
+        followers = listOf("1", "2", "3", "4"),
+        following = listOf("1", "3", "4", "5", "6", "7") ,
+        createdEvents = listOf("1", "3")
+    )
+
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Próximos eventos", "Eventos passados")
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        item {
+            ProfileHeader(user = user)
+        }
+
+        item {
+            ProfileStats(user = user)
+        }
+
+        item {
+            ProfileActions()
+        }
+
+        item {
+            EventTabs(
+                selectedTab = selectedTab,
+                tabs = tabs,
+                onTabSelected = { selectedTab = it }
+            )
         }
     }
 }
 
 @Composable
-fun ProfilePage() {
+private fun ProfileHeader(user: User) {
     Column(
-        modifier = Modifier.fillMaxSize()
-            .background(Color.LightGray)
-            .wrapContentSize(Alignment.Center)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Foto do perfil
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(Color.Gray.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            // Placeholder para foto do usuário
+            if (user.photoUrl != null) {
+                Text(
+                    text = user.name.first().toString(),
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+            } else {
+                Text(
+                    text = user.name.first().toString(),
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Nome
+        Text(
+            text = user.name,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Primary
+        )
+
+        // Username
+        Text(
+            text = user.username,
+            fontSize = 16.sp,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Biografia
+        Text(
+            text = user.biography ?: "",
+            fontSize = 14.sp,
+            color = Color.Black,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+    }
+}
+
+@Composable
+private fun ProfileStats(user: User) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        StatItem(count = user.following.size.toString(), label = "Seguindo")
+        StatItem(count = user.followers.size.toString(), label = "Seguidores")
+        StatItem(count = user.createdEvents.size.toString(), label = "Eventos criados")
+    }
+}
+
+@Composable
+private fun StatItem(count: String, label: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Profile",
+            text = count,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = OnPrimary,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            textAlign = TextAlign.Center,
-            fontSize = 20.sp
+            color = Color.Black
         )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color.Gray
+        )
+    }
+}
+
+@Composable
+private fun ProfileActions() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = { /* Implementar edição de perfil */ },
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Primary
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "Editar Perfil",
+                color = Color.White,
+                fontSize = 14.sp
+            )
+        }
+
+        Button(
+            onClick = { /* Implementar compartilhamento */ },
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Primary
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "Compartilhar perfil",
+                color = Color.White,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun EventTabs(
+    selectedTab: Int,
+    tabs: List<String>,
+    onTabSelected: (Int) -> Unit
+) {
+    TabRow(
+        selectedTabIndex = selectedTab,
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = Color.White,
+        contentColor = Primary,
+        indicator = { tabPositions ->
+            TabRowDefaults.Indicator(
+                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                color = Primary
+            )
+        }
+    ) {
+        tabs.forEachIndexed { index, title ->
+            Tab(
+                selected = selectedTab == index,
+                onClick = { onTabSelected(index) },
+                text = {
+                    Text(
+                        text = title,
+                        fontSize = 16.sp,
+                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
+                selectedContentColor = Primary,
+                unselectedContentColor = Color.Gray
+            )
+        }
     }
 }

@@ -47,7 +47,7 @@ fun EventDetailsPage (
         date = "21 de jun",
         startTime = "19h",
         endTime = "23h",
-        createdBy = "Nome usuário"
+        creatorId = "Nome usuário"
     )
 
     Column(
@@ -151,13 +151,13 @@ fun EventDetailsPage (
             Spacer(modifier = Modifier.height(16.dp))
 
             // Criado por
-            displayEvent.createdBy?.let { creator ->
-                Text(
-                    text = "Criado por *$creator*",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
+//            displayEvent.createdBy?.let { creator ->
+//                Text(
+//                    text = "Criado por *$creator*",
+//                    fontSize = 12.sp,
+//                    color = Color.Gray
+//                )
+//            }
         }
     }
 }

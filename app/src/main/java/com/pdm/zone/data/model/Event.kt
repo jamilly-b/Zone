@@ -16,5 +16,6 @@ data class Event(
     val startTime: String? = null,
     val endTime: String? = null,
     val date: String? = null,
-    val createdBy: String? = null
+    val creatorId: String = "",
+    val createdTime: String = ""
 )
