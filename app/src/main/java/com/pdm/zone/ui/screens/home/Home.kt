@@ -6,13 +6,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.components.EventCard
 
 @Composable
-fun HomePage(
-    onEventClick: (Event) -> Unit = {}
-) {
+fun HomePage(navController: NavHostController) {
     val events = listOf(
         Event(
             id = 1,
@@ -97,8 +96,7 @@ fun HomePage(
     )
 
 
-    Scaffold() {
-        innerPadding ->
+    Scaffold { innerPadding ->
         LazyColumn(
             contentPadding = PaddingValues(
                 top = innerPadding.calculateTopPadding() + 16.dp,
@@ -111,7 +109,9 @@ fun HomePage(
             items(events) { event ->
                 EventCard(
                     event = event,
-                    onCardClick = { onEventClick(it) }
+                    onCardClick = {
+                        navController.navigate("eventDetails/${event.id}")
+                    }
                 )
             }
         }
