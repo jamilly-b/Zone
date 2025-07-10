@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
@@ -24,6 +25,26 @@ import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.theme.Primary
 import com.pdm.zone.ui.theme.Secondary
 
+// Objeto para gerenciar eventos favoritos globalmente
+object FavoritesManager {
+    private val _favoriteEvents = mutableSetOf<Int>()
+    val favoriteEvents: Set<Int> get() = _favoriteEvents.toSet()
+    
+    fun toggleFavorite(eventId: Int): Boolean {
+        return if (_favoriteEvents.contains(eventId)) {
+            _favoriteEvents.remove(eventId)
+            false
+        } else {
+            _favoriteEvents.add(eventId)
+            true
+        }
+    }
+    
+    fun isFavorite(eventId: Int): Boolean {
+        return _favoriteEvents.contains(eventId)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailsPage (
@@ -33,6 +54,9 @@ fun EventDetailsPage (
     onBackClick: () -> Unit = {},
     onConfirmPresence: (Event) -> Unit = {}
 ) {
+    // Estado para controlar se o evento está favoritado
+    var isFavorited by remember { mutableStateOf(FavoritesManager.isFavorite(eventId)) }
+    
     val displayEvent = event ?: Event(
         id = 1,
         title = "Lorem ipsum dolor",
@@ -124,11 +148,13 @@ fun EventDetailsPage (
                 }
 
                 // Favoritar
-                IconButton(onClick = { /* TO DO */ }) {
+                IconButton(onClick = { 
+                    isFavorited = FavoritesManager.toggleFavorite(displayEvent.id)
+                }) {
                     Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = "Favoritar",
-                        tint = Primary,
+                        imageVector = if (isFavorited) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isFavorited) "Remover dos favoritos" else "Adicionar aos favoritos",
+                        tint = if (isFavorited) Color.Red else Primary,
                         modifier = Modifier.size(28.dp)
                     )
                 }
