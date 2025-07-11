@@ -197,7 +197,7 @@ private fun ProfileActions() {
     ) {
         Button(
             onClick = {
-                activity?.startActivity(Intent(activity, LoginActivity::class.java))
+                activity?.startActivity(Intent(activity, UserProfileEdit::class.java))
             },
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(

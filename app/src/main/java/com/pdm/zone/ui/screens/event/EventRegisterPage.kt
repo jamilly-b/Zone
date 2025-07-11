@@ -9,6 +9,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -62,10 +64,11 @@ fun EventRegisterPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    )  {
         BackHeader(navController)
 
         // Campo de imagem
@@ -181,8 +184,6 @@ fun EventRegisterPage(
         }
 
         DataField(value = description, onValueChange = { description = it }, label = "Descrição", modifier = Modifier.fillMaxWidth())
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = onSubmit,

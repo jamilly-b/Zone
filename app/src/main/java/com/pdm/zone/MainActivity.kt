@@ -43,20 +43,6 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             ZoneTheme {
                 Scaffold(
-//                    topBar = {
-//                        TopAppBar(
-//                            title = { Text("Bem-vindo/a!") },
-//                            actions = {
-//                                IconButton( onClick = { finish() } ) {
-//                                    Icon(
-//                                        imageVector =
-//                                            Icons.AutoMirrored.Filled.ExitToApp,
-//                                        contentDescription = "Localized description"
-//                                    )
-//                                }
-//                            }
-//                        )
-//                    },
                     bottomBar = {
                         val items = listOf(
                             BottomNavItem.HomeButton,

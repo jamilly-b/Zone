@@ -14,7 +14,7 @@ import com.pdm.zone.ui.screens.user.ProfilePage
 fun MainNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = Route.Home) {
         composable<Route.Home> { HomePage(navController) }
-        composable<Route.List> { ListPage() }
+        composable<Route.List> { ListPage(navController) }
         composable<Route.Profile> { ProfilePage() }
 
         composable("eventDetails/{eventId}") { backStackEntry ->
