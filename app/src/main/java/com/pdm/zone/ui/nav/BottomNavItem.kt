@@ -35,7 +35,7 @@ sealed class BottomNavItem(
         BottomNavItem("Início", Icons.Default.Home, Route.Home)
 
     data object ListButton :
-        BottomNavItem("Favoritos", Icons.Default.Favorite, Route.List)
+        BottomNavItem("Próximos eventos", Icons.Default.Favorite, Route.List)
 
     data object ProfileButton :
         BottomNavItem("Perfil", Icons.Default.Person, Route.Profile)

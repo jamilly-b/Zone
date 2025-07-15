@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,13 +29,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.pdm.zone.data.model.User
 import com.pdm.zone.ui.screens.login.LoginActivity
 import com.pdm.zone.ui.theme.Primary
 
 @Composable
-fun ProfilePage() {
+fun ProfilePage(navController: NavHostController) {
     val user = User(
         uid = "1",
         name = "Nome Sobrenome",
@@ -62,7 +64,7 @@ fun ProfilePage() {
         }
 
         item {
-            ProfileStats(user = user)
+            ProfileStats(user = user, navController = navController)
         }
 
         if (user.uid == currentUserId) {
@@ -153,22 +155,42 @@ private fun ProfileHeader(user: User) {
 }
 
 @Composable
-private fun ProfileStats(user: User) {
+private fun ProfileStats(user: User, navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatItem(count = user.following.size.toString(), label = "Seguindo")
-        StatItem(count = user.followers.size.toString(), label = "Seguidores")
-        StatItem(count = user.createdEvents.size.toString(), label = "Eventos criados")
+        StatItem(
+            count = user.following.size.toString(),
+            label = "Seguindo",
+            onClick = {
+                navController.navigate("userList/seguidos/${user.uid}")
+            }
+        )
+        StatItem(
+            count = user.followers.size.toString(),
+            label = "Seguidores",
+            onClick = {
+                navController.navigate("userList/seguidores/${user.uid}")
+            }
+        )
+        StatItem(
+            count = user.createdEvents.size.toString(),
+            label = "Eventos criados",
+            onClick = {
+                navController.navigate("EventList/createdEvents/${user.uid}")
+            }
+        )
     }
 }
 
 @Composable
-private fun StatItem(count: String, label: String) {
+private fun StatItem(count: String, label: String, onClick: (() -> Unit)? = null) {
     Column(
+        modifier = Modifier
+            .clickable(enabled = onClick != null) { onClick?.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
