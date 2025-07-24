@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
+import com.google.firebase.auth.FirebaseAuth
 import com.pdm.zone.R
 
 class LoginActivity : ComponentActivity() {
@@ -85,14 +86,24 @@ fun LoginPage(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                Toast.makeText(activity, "Login OK!", Toast.LENGTH_SHORT).show()
-                activity?.startActivity(Intent(activity, MainActivity::class.java))
+                val auth = FirebaseAuth.getInstance()
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(activity, "Login realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                            activity?.startActivity(Intent(activity, MainActivity::class.java))
+                            activity?.finish()
+                        } else {
+                            Toast.makeText(activity, "Erro no login: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
             },
             enabled = email.isNotEmpty() && password.isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Entrar", fontWeight = FontWeight.Bold)
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 

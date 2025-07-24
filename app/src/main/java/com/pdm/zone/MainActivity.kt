@@ -1,5 +1,6 @@
 package com.pdm.zone
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,9 +30,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.pdm.zone.ui.nav.BottomNavBar
 import com.pdm.zone.ui.nav.BottomNavItem
 import com.pdm.zone.ui.nav.MainNavHost
+import com.pdm.zone.ui.screens.login.LoginActivity
 import com.pdm.zone.ui.theme.ZoneTheme
 
 class MainActivity : ComponentActivity() {
@@ -41,6 +44,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
+            val user = FirebaseAuth.getInstance().currentUser
+            if (user == null) {
+                startActivity(Intent(this, LoginActivity::class.java))
+                finish()
+            }
+
             ZoneTheme {
                 Scaffold(
                     bottomBar = {

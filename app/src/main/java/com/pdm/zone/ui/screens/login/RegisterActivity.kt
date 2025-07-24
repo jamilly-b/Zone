@@ -27,6 +27,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import com.google.firebase.auth.FirebaseAuth
 import com.pdm.zone.ui.screens.user.UserProfileEdit
 
 class RegisterActivity : ComponentActivity() {
@@ -96,7 +97,17 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 if (password == repeatPassword) {
-                        activity?.startActivity(Intent(activity, UserProfileEdit::class.java))
+                    val auth = FirebaseAuth.getInstance()
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Toast.makeText(activity, "Conta criada com sucesso!", Toast.LENGTH_SHORT).show()
+                                activity?.startActivity(Intent(activity, UserProfileEdit::class.java))
+                                activity?.finish()
+                            } else {
+                                Toast.makeText(activity, "Erro: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
                 } else {
                     Toast.makeText(activity, "As senhas não coincidem!", Toast.LENGTH_SHORT).show()
                 }
@@ -106,6 +117,7 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         ) {
             Text("Criar conta", fontWeight = FontWeight.Bold)
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
