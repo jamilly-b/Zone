@@ -29,22 +29,31 @@ import com.pdm.zone.ui.theme.Primary
 import kotlinx.coroutines.tasks.await
 
 @Composable
-fun ProfilePage(navController: NavHostController) {
+fun ProfilePage(
+    navController: NavHostController,
+    userId: String? // Recebe o ID do usuário via navegação
+) {
     val context = LocalContext.current
-    val currentUser = FirebaseAuth.getInstance().currentUser
+    val authUser = FirebaseAuth.getInstance().currentUser
     var user by remember { mutableStateOf<User?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        if (currentUser != null) {
+    // Verifica se é o perfil do próprio usuário
+    val isCurrentUser = remember(userId, authUser) {
+        userId == null || userId == authUser?.uid
+    }
+
+    LaunchedEffect(userId) {
+        val uidToLoad = userId ?: authUser?.uid
+        if (uidToLoad != null) {
             try {
                 val snapshot = FirebaseFirestore.getInstance()
                     .collection("users")
-                    .document(currentUser.uid)
+                    .document(uidToLoad)
                     .get()
                     .await()
 
-                user = snapshot.toObject(User::class.java)?.copy(uid = currentUser.uid)
+                user = snapshot.toObject(User::class.java)?.copy(uid = uidToLoad)
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(context, "Erro ao carregar perfil", Toast.LENGTH_SHORT).show()
@@ -52,14 +61,13 @@ fun ProfilePage(navController: NavHostController) {
                 isLoading = false
             }
         } else {
-            Toast.makeText(context, "Usuário não logado", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Usuário não encontrado", Toast.LENGTH_SHORT).show()
             isLoading = false
         }
     }
 
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Próximos eventos", "Eventos passados")
-    val currentUserId = "1"
 
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -74,14 +82,16 @@ fun ProfilePage(navController: NavHostController) {
             item { ProfileHeader(user!!) }
             item { ProfileStats(user = user!!, navController = navController) }
 
-            if (user!!.uid == currentUser?.uid) {
+            if (isCurrentUser) {
                 item { ProfileActions() }
             } else {
                 item {
                     FollowActions(
                         user = user!!,
-                        currentUserId = currentUser?.uid ?: "",
-                        onFollowChanged = { followed -> /* salvar follow no banco depois */ }
+                        currentUserId = authUser?.uid ?: "",
+                        onFollowChanged = { followed ->
+                            // lógica para seguir/deixar de seguir
+                        }
                     )
                 }
             }

@@ -42,31 +42,48 @@ sealed class BottomNavItem(
 }
 
 @Composable
-fun BottomNavBar(navController: NavHostController, items : List<BottomNavItem>) {
-    NavigationBar(
-        contentColor = Primary
-    ) {
+fun BottomNavBar(
+    navController: NavHostController,
+    items: List<BottomNavItem>,
+    currentUserId: String
+) {
+    NavigationBar(contentColor = Primary) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination
+        val currentRoute = navBackStackEntry?.destination?.route
+
         items.forEach { item ->
-            NavigationBarItem (
-                icon = { Icon(imageVector = item.icon, contentDescription= item.title)},
+            NavigationBarItem(
+                icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                 label = { Text(text = item.title, fontSize = 12.sp) },
                 alwaysShowLabel = true,
-                selected = currentRoute == item.route,
+                selected = currentRoute == when (item) {
+                    is BottomNavItem.HomeButton -> Route.Home.toString()
+                    is BottomNavItem.ListButton -> Route.List.toString()
+                    is BottomNavItem.ProfileButton -> "profile/$currentUserId"
+                },
                 onClick = {
-                    navController.navigate(item.route) {
-                        // Volta pilha de navegação até HomePage (startDest).
-                        navController.graph.startDestinationRoute?.let {
-                            popUpTo(it) {
-                                saveState = true
+                    if (item.route is Route.Profile) {
+                        navController.navigate("profile/${currentUserId}") {
+                            navController.graph.startDestinationRoute?.let {
+                                popUpTo(it) {
+                                    saveState = true
+                                }
+                                restoreState = true
                             }
-                            restoreState = true
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
+                    } else {
+                        navController.navigate(item.route) {
+                            navController.graph.startDestinationRoute?.let {
+                                popUpTo(it) {
+                                    saveState = true
+                                }
+                                restoreState = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
-                }
-            )
+                })
         }
     }
 }

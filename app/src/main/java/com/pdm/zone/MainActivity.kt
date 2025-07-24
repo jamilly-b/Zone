@@ -45,6 +45,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val user = FirebaseAuth.getInstance().currentUser
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
             if (user == null) {
                 startActivity(Intent(this, LoginActivity::class.java))
                 finish()
@@ -52,13 +53,13 @@ class MainActivity : ComponentActivity() {
 
             ZoneTheme {
                 Scaffold(
-                    bottomBar = {
+                bottomBar = {
                         val items = listOf(
                             BottomNavItem.HomeButton,
                             BottomNavItem.ListButton,
                             BottomNavItem.ProfileButton,
                         )
-                        BottomNavBar(navController = navController, items)
+                        BottomNavBar(navController = navController, items, currentUserId = currentUserId)
                     },
                     floatingActionButton = {
                         FloatingActionButton(onClick = {
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        MainNavHost(navController = navController)
+                        MainNavHost(navController = navController, currentUserId = currentUserId)
                     }
                 }
             }
