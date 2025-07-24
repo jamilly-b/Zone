@@ -61,16 +61,16 @@ fun UserItem(
                 .padding(end = 12.dp),
             contentAlignment = Alignment.Center
         ) {
-            if (user.photoUrl != null) {
+            if (user.profilePic != null) {
                 Text(
-                    text = user.name.first().toString(),
+                    text = user.firstName.first().toString(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Primary
                 )
             } else {
                 Text(
-                    text = user.name.first().toString(),
+                    text = user.firstName.first().toString(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Primary
@@ -80,7 +80,7 @@ fun UserItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = user.name,
+                text = user.firstName,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -97,11 +97,12 @@ fun UserItem(
 private fun getUsers(): List<User> = List(10) { i ->
     User(
         uid = "user_$i",
-        name = "Usuário $i",
+        firstName = "Usuário $i",
+        lastName = "da Silva",
         username = "@usuario$i",
-        photoUrl = null,
+        profilePic = null,
         biography = "Biografia do usuário $i",
-        birthday = "1990-01-01",
+        dateOfBirth = "1990-01-01",
         createdTime = "2023-01-01",
         followers = listOf("1", "2"),
         following = listOf("1", "3"),

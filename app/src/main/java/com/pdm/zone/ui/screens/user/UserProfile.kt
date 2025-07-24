@@ -2,18 +2,13 @@ package com.pdm.zone.ui.screens.user
 
 import android.app.Activity
 import android.content.Intent
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -21,71 +16,87 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pdm.zone.data.model.User
-import com.pdm.zone.ui.screens.login.LoginActivity
 import com.pdm.zone.ui.theme.Primary
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ProfilePage(navController: NavHostController) {
-    val user = User(
-        uid = "1",
-        name = "Nome Sobrenome",
-        username = "Username",
-        photoUrl = null,
-        biography = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquet in sit amet nisl.",
-        birthday = "1990-01-01",
-        createdTime = "2023-01-01",
-        followers = listOf("1", "2", "3", "4"),
-        following = listOf("1", "3", "4", "5", "6", "7") ,
-        createdEvents = listOf("1", "3")
-    )
+    val context = LocalContext.current
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    var user by remember { mutableStateOf<User?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        if (currentUser != null) {
+            try {
+                val snapshot = FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(currentUser.uid)
+                    .get()
+                    .await()
+
+                user = snapshot.toObject(User::class.java)?.copy(uid = currentUser.uid)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(context, "Erro ao carregar perfil", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+            }
+        } else {
+            Toast.makeText(context, "Usuário não logado", Toast.LENGTH_SHORT).show()
+            isLoading = false
+        }
+    }
 
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Próximos eventos", "Eventos passados")
     val currentUserId = "1"
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        item {
-            ProfileHeader(user = user)
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
+    } else if (user != null) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            item { ProfileHeader(user!!) }
+            item { ProfileStats(user = user!!, navController = navController) }
 
-        item {
-            ProfileStats(user = user, navController = navController)
-        }
+            if (user!!.uid == currentUser?.uid) {
+                item { ProfileActions() }
+            } else {
+                item {
+                    FollowActions(
+                        user = user!!,
+                        currentUserId = currentUser?.uid ?: "",
+                        onFollowChanged = { followed -> /* salvar follow no banco depois */ }
+                    )
+                }
+            }
 
-        if (user.uid == currentUserId) {
-            item { ProfileActions() }
-        }
-        else{
             item {
-                FollowActions(
-                    user = user,
-                    currentUserId = currentUserId,
-                    onFollowChanged = { followed -> /* Atualiza no baco de dados */}
+                EventTabs(
+                    selectedTab = selectedTab,
+                    tabs = tabs,
+                    onTabSelected = { selectedTab = it }
                 )
             }
         }
-
-        item {
-            EventTabs(
-                selectedTab = selectedTab,
-                tabs = tabs,
-                onTabSelected = { selectedTab = it }
-            )
+    } else {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Erro ao carregar perfil")
         }
     }
 }
@@ -107,16 +118,16 @@ private fun ProfileHeader(user: User) {
             contentAlignment = Alignment.Center
         ) {
             // Placeholder para foto do usuário
-            if (user.photoUrl != null) {
+            if (user.profilePic != null) {
                 Text(
-                    text = user.name.first().toString(),
+                    text = user.firstName.first().toString(),
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Gray
                 )
             } else {
                 Text(
-                    text = user.name.first().toString(),
+                    text = user.firstName.first().toString(),
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Gray
@@ -128,7 +139,7 @@ private fun ProfileHeader(user: User) {
 
         // Nome
         Text(
-            text = user.name,
+            text = user.firstName + " " + user.lastName,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Primary

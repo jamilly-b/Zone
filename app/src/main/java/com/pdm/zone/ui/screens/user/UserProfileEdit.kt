@@ -32,6 +32,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pdm.zone.MainActivity
 
 class UserProfileEdit : ComponentActivity() {
@@ -156,8 +158,39 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
                 if (firstName.isBlank() || lastName.isBlank() || userName.isBlank() || dateOfBirth.isBlank()) {
                     Toast.makeText(activity, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(activity, "Cadastro realizado!", Toast.LENGTH_SHORT).show()
-                    activity?.startActivity(Intent(activity, MainActivity::class.java))
+                    val userId = FirebaseAuth.getInstance().currentUser?.uid
+                    if (userId != null) {
+                        val db = FirebaseFirestore.getInstance()
+                        val timestamp = System.currentTimeMillis().toString()
+
+                        val user = com.pdm.zone.data.model.User(
+                            uid = userId,
+                            firstName = firstName,
+                            lastName = lastName,
+                            username = userName,
+                            profilePic = profilePic,
+                            biography = biography,
+                            dateOfBirth = dateOfBirth,
+                            createdTime = timestamp,
+                            followers = emptyList(),
+                            following = emptyList(),
+                            createdEvents = emptyList(),
+                            favoriteEvents = emptyList()
+                        )
+
+                        db.collection("users").document(userId)
+                            .set(user)
+                            .addOnSuccessListener {
+                                Toast.makeText(activity, "Perfil salvo com sucesso!", Toast.LENGTH_SHORT).show()
+                                activity?.startActivity(Intent(activity, MainActivity::class.java))
+                                activity?.finish()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(activity, "Erro ao salvar perfil: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                    } else {
+                        Toast.makeText(activity, "Usuário não autenticado!", Toast.LENGTH_SHORT).show()
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
