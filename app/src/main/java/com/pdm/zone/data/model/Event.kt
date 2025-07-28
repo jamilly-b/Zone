@@ -1,21 +1,33 @@
 package com.pdm.zone.data.model
 
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
+
 data class Event(
-    val id: Int,
-    val title: String,
-    val location: String,
-    val dateTime: String,
-    val description: String,
-    val imageRes: Int,
-    val category: String,
-    val attendees: List<String> = emptyList(),
-    val confirmedCount: Int = 0,
-    val interestedCount: Int = 0,
-    val price: String? = null,
-    val distance: String? = null,
+    @DocumentId
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val location: String = "",
+    val category: String = "",
+    val imageUrl: String? = null,
+    val creatorId: String = "",
+    val creatorUsername: String = "",
+
+    // Campos de data e hora
+    @ServerTimestamp
+    val eventDate: Date? = null,
     val startTime: String? = null,
     val endTime: String? = null,
-    val date: String? = null,
-    val creatorId: String = "",
-    val createdTime: String = ""
-)
+
+    val attendees: List<String> = emptyList(),
+    val interestedUsers: List<String> = emptyList()
+) {
+
+    val confirmedCount: Int
+        get() = attendees.size
+
+    val interestedCount: Int
+        get() = interestedUsers.size
+}

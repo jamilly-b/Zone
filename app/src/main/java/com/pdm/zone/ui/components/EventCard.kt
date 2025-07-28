@@ -1,26 +1,31 @@
 package com.pdm.zone.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.pdm.zone.R
 import com.pdm.zone.data.model.Event
-import androidx.compose.ui.graphics.Color
 import com.pdm.zone.ui.theme.Primary
 import com.pdm.zone.ui.theme.Secondary
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun EventCard(
@@ -44,14 +49,18 @@ fun EventCard(
                 .padding(12.dp)
         ) {
 
-            Image(
-                painter = painterResource(event.imageRes),
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(event.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.placeholder_event),
                 contentDescription = event.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Inside
+                contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -64,8 +73,6 @@ fun EventCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-
-            //Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -87,8 +94,9 @@ fun EventCard(
                     )
                 }
 
+                // Alterado para formatar a data e hora do novo modelo
                 Text(
-                    text = event.dateTime,
+                    text = formatEventDateTime(event),
                     fontSize = 14.sp,
                     color = Secondary,
                     fontWeight = FontWeight.Medium
@@ -106,4 +114,18 @@ fun EventCard(
             )
         }
     }
+}
+
+// Função auxiliar para formatar a data e hora
+@Composable
+private fun formatEventDateTime(event: Event): String {
+    val dateFormatter = remember { SimpleDateFormat("dd/MM", Locale("pt", "BR")) }
+    return event.eventDate?.let { date ->
+        val formattedDate = dateFormatter.format(date)
+        if (event.startTime != null) {
+            "$formattedDate | ${event.startTime}"
+        } else {
+            formattedDate
+        }
+    } ?: ""
 }
