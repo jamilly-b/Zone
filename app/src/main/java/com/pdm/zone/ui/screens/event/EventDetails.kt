@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,61 +17,33 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.theme.Primary
 import com.pdm.zone.ui.theme.Secondary
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailsPage (
-    eventId: Int,
+    eventId: String,
     navController: NavHostController,
-    event: Event? = null,
-    onBackClick: () -> Unit = {},
-    onConfirmPresence: (Event) -> Unit = {}
+    viewModel: EventDetailsViewModel = viewModel()
 ) {
-    val displayEvent = event ?: Event(
-        id = 1,
-        title = "Lorem ipsum dolor",
-        location = "Rua XXX, Várzea - Recife, PE",
-        dateTime = "21 de jun | 19h - 23h",
-        description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec augue a ligula iaculis aliquam in sit amet libero. Sed tempor odio eget elit pharetra, et eleifend lorem tempus. Pellentesque lobortis venenatis sapien at blandit. Quisque maximus urna bibendum efficitur lacinia. Nam accumsan mauris in ante tempus dictum.",
-        imageRes = android.R.drawable.ic_menu_gallery,
-        category = "Evento",
-        attendees = listOf("João", "Maria", "Pedro", "Ana", "Carlos", "Lucia", "Roberto", "Fernanda"),
-        confirmedCount = 30,
-        interestedCount = 15,
-        date = "21 de jun",
-        startTime = "19h",
-        endTime = "23h",
-        creatorId = "Nome usuário"
-    )
+    val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        // Header com imagem
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(250.dp)
-        ) {
-            // Imagem
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
-                    .background(Color.Gray.copy(alpha = 0.3f))
-            )
+    LaunchedEffect(eventId) {
+        viewModel.loadEvent(eventId)
+    }
 
-            // Barra de navegação
+    Scaffold(
+        topBar = {
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = {navController.popBackStack()}) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Voltar",
@@ -86,6 +56,51 @@ fun EventDetailsPage (
                 )
             )
         }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color.White)
+        ) {
+            when {
+                // Estado de carregamento
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                // Estado de erro
+                uiState.error != null -> {
+                    Text(
+                        text = uiState.error!!,
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color.Red
+                    )
+                }
+                // Estado de sucesso
+                uiState.event != null -> {
+                    EventDetailsContent(event = uiState.event!!)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EventDetailsContent(event: Event) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+        ) {
+            // TODO: Carregar a imagem da event.imageUrl usando uma biblioteca como Coil
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                    .background(Color.Gray.copy(alpha = 0.3f))
+            )
+        }
 
         // Conteúdo principal
         Column(
@@ -95,7 +110,7 @@ fun EventDetailsPage (
         ) {
             // Título do evento
             Text(
-                text = displayEvent.title,
+                text = event.title,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = Primary,
@@ -112,19 +127,19 @@ fun EventDetailsPage (
                 // Confirmados e interessados
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
-                        text = "${displayEvent.confirmedCount} Confirmados",
+                        text = "${event.confirmedCount} Confirmados",
                         fontSize = 12.sp,
                         color = Secondary
                     )
                     Text(
-                        text = "${displayEvent.interestedCount} Interessados",
+                        text = "${event.interestedCount} Interessados",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                 }
 
                 // Favoritar
-                IconButton(onClick = { /* TO DO */ }) {
+                IconButton(onClick = { /* TODO: Implementar lógica de favoritar */ }) {
                     Icon(
                         imageVector = Icons.Default.Favorite,
                         contentDescription = "Favoritar",
@@ -136,7 +151,7 @@ fun EventDetailsPage (
 
             // Descrição
             Text(
-                text = displayEvent.description,
+                text = event.description,
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp,
@@ -146,24 +161,25 @@ fun EventDetailsPage (
             Spacer(modifier = Modifier.height(16.dp))
 
             // Informações do evento
-            EventInfoSection(event = displayEvent)
+            EventInfoSection(event = event)
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Criado por
-//            displayEvent.createdBy?.let { creator ->
-//                Text(
-//                    text = "Criado por *$creator*",
-//                    fontSize = 12.sp,
-//                    color = Color.Gray
-//                )
-//            }
+            Text(
+                text = "Criado por @${event.creatorUsername}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
         }
     }
 }
 
+
 @Composable
 fun EventInfoSection(event: Event) {
+    val dateFormatter = remember { SimpleDateFormat("dd 'de' MMMM", Locale("pt", "BR")) }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -173,18 +189,17 @@ fun EventInfoSection(event: Event) {
             text = event.location
         )
 
-        // Horário
-        val timeText = if (event.startTime != null && event.endTime != null) {
-            "${event.startTime} - ${event.endTime}"
-        } else {
-            event.dateTime
-        }
-
-        // Data
-        event.date?.let { date ->
+        // Data e Horário
+        event.eventDate?.let { date ->
+            val formattedDate = dateFormatter.format(date).replaceFirstChar { it.uppercase() }
+            val timeText = if (event.startTime != null && event.endTime != null) {
+                "$formattedDate | ${event.startTime} - ${event.endTime}"
+            } else {
+                formattedDate
+            }
             EventInfoItem(
                 icon = Icons.Default.DateRange,
-                text = date
+                text = timeText
             )
         }
     }
