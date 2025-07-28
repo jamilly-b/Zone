@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.pdm.zone.MainActivity
 import com.pdm.zone.ui.components.DataField
 import com.pdm.zone.ui.components.PasswordField
 import com.pdm.zone.ui.theme.ZoneTheme
@@ -28,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import com.google.firebase.auth.FirebaseAuth
+import com.pdm.zone.MainActivity
 import com.pdm.zone.R
 
 class LoginActivity : ComponentActivity() {

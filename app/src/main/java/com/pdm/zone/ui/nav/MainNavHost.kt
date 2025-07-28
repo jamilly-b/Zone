@@ -3,6 +3,7 @@ package com.pdm.zone.ui.nav
 import android.R.attr.defaultValue
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
@@ -14,14 +15,11 @@ import com.pdm.zone.ui.screens.user.ProfilePage
 import com.pdm.zone.ui.screens.user.UserListPage
 
 @Composable
-fun MainNavHost(navController: NavHostController, currentUserId: String) {
+fun MainNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = Route.Home) {
 
         composable<Route.Home> { HomePage(navController) }
         composable<Route.List> { ListPage(navController) }
-        composable<Route.Profile> {
-            ProfilePage(navController = navController, userId = currentUserId)
-        }
 
         // Tela de cadastro de evento
         composable("eventRegister") {
@@ -38,31 +36,31 @@ fun MainNavHost(navController: NavHostController, currentUserId: String) {
             }
         }
 
-        // Lista de seguidores ou seguindo
-        composable("userList/{type}/{userId}") { backStackEntry ->
+        // Rota de lista de usuários
+        composable("userList/{type}/{username}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type")
-            val userId = backStackEntry.arguments?.getString("userId")
-            if (type != null && userId != null) {
-                UserListPage(type = type, userId = userId, navController = navController)
+            val username = backStackEntry.arguments?.getString("username")
+            if (type != null && username != null) {
+                // IMPORTANTE: Você precisará ajustar a UserListPage para receber 'username'
+                UserListPage(type = type, username = username, navController = navController)
             }
         }
 
-        // Rota para o perfil de qualquer usuário (inclusive outros)
+        // Rota para o perfil de qualquer usuário
         composable(
-            route = "profile/{userId}",
-            arguments = listOf(navArgument("userId") {
-                nullable = true
-                defaultValue = null
-            })
+            route = "profile/{username}",
+            arguments = listOf(navArgument("username") { nullable = false })
         ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId")
-            ProfilePage(navController = navController, userId = userId)
+            val username = backStackEntry.arguments?.getString("username")
+            if (username != null) {
+                ProfilePage(navController = navController, username = username)
+            }
         }
 
-        // Lista de eventos criados por um usuário
-        composable("EventList/createdEvents/{userId}") { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId")
-            if (userId != null) {
+        // Rota de lista de eventos criados
+        composable("EventList/createdEvents/{username}") { backStackEntry ->
+            val username = backStackEntry.arguments?.getString("username")
+            if (username != null) {
                 ListPage(navController)
             }
         }

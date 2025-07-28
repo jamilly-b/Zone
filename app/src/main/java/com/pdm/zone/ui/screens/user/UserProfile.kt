@@ -21,93 +21,130 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.pdm.zone.data.model.User
 import com.pdm.zone.ui.theme.Primary
-import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ProfilePage(
     navController: NavHostController,
-    userId: String? // Recebe o ID do usuário via navegação
+    username: String,
+    viewModel: ProfileViewModel = viewModel()
 ) {
-    val context = LocalContext.current
-    val authUser = FirebaseAuth.getInstance().currentUser
-    var user by remember { mutableStateOf<User?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
 
-    // Verifica se é o perfil do próprio usuário
-    val isCurrentUser = remember(userId, authUser) {
-        userId == null || userId == authUser?.uid
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(username) {
+        viewModel.loadUserProfile(username)
     }
 
-    LaunchedEffect(userId) {
-        val uidToLoad = userId ?: authUser?.uid
-        if (uidToLoad != null) {
-            try {
-                val snapshot = FirebaseFirestore.getInstance()
-                    .collection("users")
-                    .document(uidToLoad)
-                    .get()
-                    .await()
-
-                user = snapshot.toObject(User::class.java)?.copy(uid = uidToLoad)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(context, "Erro ao carregar perfil", Toast.LENGTH_SHORT).show()
-            } finally {
-                isLoading = false
-            }
-        } else {
-            Toast.makeText(context, "Usuário não encontrado", Toast.LENGTH_SHORT).show()
-            isLoading = false
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
         }
     }
 
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Próximos eventos", "Eventos passados")
-
-    if (isLoading) {
+    if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-    } else if (user != null) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            item { ProfileHeader(user!!) }
-            item { ProfileStats(user = user!!, navController = navController) }
+        return
+    }
 
-            if (isCurrentUser) {
-                item { ProfileActions() }
-            } else {
-                item {
-                    FollowActions(
-                        user = user!!,
-                        currentUserId = authUser?.uid ?: "",
-                        onFollowChanged = { followed ->
-                            // lógica para seguir/deixar de seguir
-                        }
-                    )
-                }
-            }
+    if (uiState.user == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(uiState.error ?: "Perfil não encontrado.")
+        }
+        return
+    }
 
+    val user = uiState.user!!
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Próximos eventos", "Eventos passados")
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        item { ProfileHeader(user) }
+        item { ProfileStats(user = user, navController = navController) }
+
+        if (uiState.isCurrentUserProfile) {
+            item { ProfileActions() }
+        } else {
             item {
-                EventTabs(
-                    selectedTab = selectedTab,
-                    tabs = tabs,
-                    onTabSelected = { selectedTab = it }
+                FollowActions(
+                    isFollowing = uiState.isFollowing,
+                    onClick = { viewModel.toggleFollow() }
                 )
             }
         }
-    } else {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Erro ao carregar perfil")
+
+        item {
+            EventTabs(
+                selectedTab = selectedTab,
+                tabs = tabs,
+                onTabSelected = { selectedTab = it }
+            )
         }
+    }
+}
+
+@Composable
+private fun ProfileStats(user: User, navController: NavHostController) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        StatItem(
+            count = user.following.size.toString(),
+            label = "Seguindo",
+            onClick = {
+                navController.navigate("userList/seguindo/${user.username}")
+            }
+        )
+        StatItem(
+            count = user.followers.size.toString(),
+            label = "Seguidores",
+            onClick = {
+                navController.navigate("userList/seguidores/${user.username}")
+            }
+        )
+        StatItem(
+            count = user.createdEvents.size.toString(),
+            label = "Eventos criados",
+            onClick = {
+                navController.navigate("EventList/createdEvents/${user.username}")
+            }
+        )
+    }
+}
+
+@Composable
+private fun FollowActions(
+    isFollowing: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isFollowing) Color.Gray else Primary
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = if (isFollowing) "Deixar de seguir" else "Seguir",
+            color = Color.White,
+            fontSize = 14.sp
+        )
     }
 }
 
@@ -176,38 +213,6 @@ private fun ProfileHeader(user: User) {
 }
 
 @Composable
-private fun ProfileStats(user: User, navController: NavHostController) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        StatItem(
-            count = user.following.size.toString(),
-            label = "Seguindo",
-            onClick = {
-                navController.navigate("userList/seguidos/${user.uid}")
-            }
-        )
-        StatItem(
-            count = user.followers.size.toString(),
-            label = "Seguidores",
-            onClick = {
-                navController.navigate("userList/seguidores/${user.uid}")
-            }
-        )
-        StatItem(
-            count = user.createdEvents.size.toString(),
-            label = "Eventos criados",
-            onClick = {
-                navController.navigate("EventList/createdEvents/${user.uid}")
-            }
-        )
-    }
-}
-
-@Composable
 private fun StatItem(count: String, label: String, onClick: (() -> Unit)? = null) {
     Column(
         modifier = Modifier
@@ -269,35 +274,6 @@ private fun ProfileActions() {
                 fontSize = 14.sp
             )
         }
-    }
-}
-
-@Composable
-private fun FollowActions(
-    user: User,
-    currentUserId: String,
-    onFollowChanged: (Boolean) -> Unit
-) {
-    var isFollowing by remember { mutableStateOf(user.followers.contains(currentUserId)) }
-
-    Button(
-        onClick = {
-            isFollowing = !isFollowing
-            onFollowChanged(isFollowing)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isFollowing) Color.Gray else Primary
-        ),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Text(
-            text = if (isFollowing) "Deixar de seguir" else "Seguir",
-            color = Color.White,
-            fontSize = 14.sp
-        )
     }
 }
 

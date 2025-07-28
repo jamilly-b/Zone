@@ -1,5 +1,7 @@
 package com.pdm.zone.ui.nav
 
+import android.net.http.SslCertificate.restoreState
+import android.net.http.SslCertificate.saveState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -16,6 +18,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.pdm.zone.ui.theme.Primary
 import kotlinx.serialization.Serializable
 import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
+import com.pdm.zone.data.SessionManager
 
 sealed interface Route {
     @Serializable
@@ -44,46 +56,59 @@ sealed class BottomNavItem(
 @Composable
 fun BottomNavBar(
     navController: NavHostController,
-    items: List<BottomNavItem>,
-    currentUserId: String
+    items: List<BottomNavItem>
+    // 1. Removido o parâmetro 'currentUserId', que não é mais necessário
 ) {
+    // 2. Usando o SessionManager como única fonte para o usuário logado.
+    val currentUser by SessionManager.currentUser.collectAsState()
+
     NavigationBar(contentColor = Primary) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
+
+        // 3. O LaunchedEffect antigo foi completamente REMOVIDO daqui.
 
         items.forEach { item ->
             NavigationBarItem(
                 icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                 label = { Text(text = item.title, fontSize = 12.sp) },
                 alwaysShowLabel = true,
-                selected = currentRoute == when (item) {
-                    is BottomNavItem.HomeButton -> Route.Home.toString()
-                    is BottomNavItem.ListButton -> Route.List.toString()
-                    is BottomNavItem.ProfileButton -> "profile/$currentUserId"
+                selected = when (item) {
+                    // Compara a rota atual com a rota de perfil, usando o username do SessionManager
+                    is BottomNavItem.ProfileButton -> currentRoute == "profile/${currentUser?.username}"
+                    // Compara outras rotas pelo seu nome de classe qualificado
+                    else -> currentRoute == item.route::class.qualifiedName
                 },
+                // 4. Lógica de clique TOTALMENTE CORRIGIDA
                 onClick = {
-                    if (item.route is Route.Profile) {
-                        navController.navigate("profile/${currentUserId}") {
-                            navController.graph.startDestinationRoute?.let {
-                                popUpTo(it) {
-                                    saveState = true
+                    when (item.route) {
+                        is Route.Profile -> {
+                            // Ação para o perfil: só navega se tiver um username
+                            currentUser?.username?.let { username ->
+                                navController.navigate("profile/$username") {
+                                    // Comportamento padrão para itens da bottom bar
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                restoreState = true
                             }
-                            launchSingleTop = true
                         }
-                    } else {
-                        navController.navigate(item.route) {
-                            navController.graph.startDestinationRoute?.let {
-                                popUpTo(it) {
+                        else -> {
+                            // Ação para outros itens (Home, List)
+                            navController.navigate(item.route) {
+                                // Comportamento padrão para itens da bottom bar
+                                popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
+                                launchSingleTop = true
                                 restoreState = true
                             }
-                            launchSingleTop = true
                         }
                     }
-                })
+                }
+            )
         }
     }
 }
