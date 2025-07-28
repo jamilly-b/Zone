@@ -13,6 +13,7 @@ import com.pdm.zone.ui.screens.user.UserListPage
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
+//Rotas dos menus
 @Composable
 fun MainNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = Route.Home) {
@@ -62,5 +63,6 @@ fun MainNavHost(navController: NavHostController) {
                 ListPage(navController)
             }
         }
+
     }
 }
