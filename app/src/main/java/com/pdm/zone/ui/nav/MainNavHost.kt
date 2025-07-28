@@ -14,6 +14,7 @@ import com.pdm.zone.ui.screens.home.ListPage
 import com.pdm.zone.ui.screens.user.ProfilePage
 import com.pdm.zone.ui.screens.user.UserListPage
 
+//Rotas dos menus
 @Composable
 fun MainNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = Route.Home) {
@@ -64,6 +65,7 @@ fun MainNavHost(navController: NavHostController) {
                 ListPage(navController)
             }
         }
+
     }
 }
 
