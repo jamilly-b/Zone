@@ -60,8 +60,30 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
     var biography by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
 
-
     val activity = LocalContext.current as? Activity
+
+    //Crregar info do usuario quando for pra editar
+    LaunchedEffect(Unit) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId != null) {
+            val db = FirebaseFirestore.getInstance()
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        firstName = document.getString("firstName") ?: ""
+                        lastName = document.getString("lastName") ?: ""
+                        userName = document.getString("username") ?: ""
+                        dateOfBirth = document.getString("dateOfBirth") ?: ""
+                        biography = document.getString("biography") ?: ""
+                        profilePic = document.getString("profilePic") ?: ""
+                    }
+                }
+                .addOnFailureListener {
+                    Toast.makeText(context, "Erro ao carregar perfil", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
 
     Column(
         modifier = modifier
