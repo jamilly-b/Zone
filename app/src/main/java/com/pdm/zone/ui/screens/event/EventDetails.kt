@@ -7,7 +7,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,7 +51,7 @@ fun EventDetailsPage (
             TopAppBar(
                 title = {
                     Text(
-                        text = "",
+                        text = uiState.event?.title ?: "",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -87,7 +89,13 @@ fun EventDetailsPage (
                     )
                 }
                 uiState.event != null -> {
-                    EventDetailsContent(event = uiState.event!!)
+                    EventDetailsContent(
+                        event = uiState.event!!,
+                        isConfirmed = uiState.isCurrentUserConfirmed,
+                        isInterested = uiState.isCurrentUserInterested,
+                        onConfirmClick = { viewModel.togglePresenceConfirmation() },
+                        onInterestClick = { viewModel.toggleInterest() }
+                    )
                 }
             }
         }
@@ -95,7 +103,13 @@ fun EventDetailsPage (
 }
 
 @Composable
-private fun EventDetailsContent(event: Event) {
+private fun EventDetailsContent(
+    event: Event,
+    isConfirmed: Boolean,
+    isInterested: Boolean,
+    onConfirmClick: () -> Unit,
+    onInterestClick: () -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -129,8 +143,7 @@ private fun EventDetailsContent(event: Event) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -147,18 +160,28 @@ private fun EventDetailsContent(event: Event) {
                         )
                     }
 
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "Favoritar",
-                            tint = Primary,
-                            modifier = Modifier.size(28.dp)
-                        )
+                    // ------------------ Ícones provisórios ------------------
+                    Row {
+                        IconButton(onClick = onConfirmClick) {
+                            Icon(
+                                imageVector = if (isConfirmed) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (isConfirmed) "Remover confirmação" else "Confirmar Presença",
+                                tint = Primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                        IconButton(onClick = onInterestClick) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Tenho Interesse",
+                                tint = if (isInterested) Primary else Color.Gray,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
                     text = event.description,
                     style = MaterialTheme.typography.bodyLarge,
@@ -173,6 +196,8 @@ private fun EventDetailsContent(event: Event) {
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
+
+                // CORREÇÃO: O botão grande de confirmação foi REMOVIDO daqui.
             }
         }
     }
