@@ -37,11 +37,11 @@ fun MainNavHost(navController: NavHostController) {
         }
 
         // Rota de lista de usuários
-        composable("userList/{type}/{username}") { backStackEntry ->
+        composable("userList/{type}/{listId}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type")
-            val username = backStackEntry.arguments?.getString("username")
-            if (type != null && username != null) {
-                UserListPage(type = type, username = username, navController = navController)
+            val listId = backStackEntry.arguments?.getString("listId")
+            if (type != null && listId != null) {
+                UserListPage(type = type, listId = listId, navController = navController)
             }
         }
 

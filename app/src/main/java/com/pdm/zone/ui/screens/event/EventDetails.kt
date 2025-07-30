@@ -1,6 +1,7 @@
 package com.pdm.zone.ui.screens.event
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -94,7 +95,8 @@ fun EventDetailsPage (
                         isConfirmed = uiState.isCurrentUserConfirmed,
                         isInterested = uiState.isCurrentUserInterested,
                         onConfirmClick = { viewModel.togglePresenceConfirmation() },
-                        onInterestClick = { viewModel.toggleInterest() }
+                        onInterestClick = { viewModel.toggleInterest() },
+                        navController = navController
                     )
                 }
             }
@@ -108,7 +110,8 @@ private fun EventDetailsContent(
     isConfirmed: Boolean,
     isInterested: Boolean,
     onConfirmClick: () -> Unit,
-    onInterestClick: () -> Unit
+    onInterestClick: () -> Unit,
+    navController: NavHostController
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -151,7 +154,10 @@ private fun EventDetailsContent(
                         Text(
                             text = "${event.confirmedCount} Confirmados",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Secondary
+                            color = Secondary,
+                            modifier = Modifier.clickable {
+                                navController.navigate("userList/confirmados/${event.id}")
+                            }
                         )
                         Text(
                             text = "${event.interestedCount} Interessados",
@@ -196,8 +202,6 @@ private fun EventDetailsContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
-
-                // CORREÇÃO: O botão grande de confirmação foi REMOVIDO daqui.
             }
         }
     }

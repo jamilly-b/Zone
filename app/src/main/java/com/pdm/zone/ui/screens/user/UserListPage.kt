@@ -24,14 +24,14 @@ import androidx.navigation.NavHostController
 @Composable
 fun UserListPage(
     type: String,
-    username: String,
+    listId: String,
     navController: NavHostController,
     viewModel: UserListViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(username, type) {
-        viewModel.loadUsers(username, type)
+    LaunchedEffect(listId, type) {
+        viewModel.loadUsers(listId, type)
     }
 
     Scaffold(

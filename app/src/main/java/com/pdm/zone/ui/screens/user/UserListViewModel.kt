@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
+import com.pdm.zone.data.model.Event // <-- Importe o modelo Event
 import com.pdm.zone.data.model.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,33 +27,35 @@ class UserListViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(UserListUiState())
     val uiState: StateFlow<UserListUiState> = _uiState.asStateFlow()
 
-    fun loadUsers(username: String, type: String) {
+    // CORREÇÃO: 'username' foi renomeado para 'listId' para ser mais genérico.
+    fun loadUsers(listId: String, type: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null, screenTitle = type.replaceFirstChar { it.uppercase() }) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
 
             try {
-                // Encontrar o usuário principal pelo username para obter a lista de UIDs
-                val initialUserSnapshot = db.collection("users")
-                    .whereEqualTo("username", username)
-                    .limit(1)
-                    .get()
-                    .await()
+                // Obter a lista de UIDs de diferentes fontes, dependendo do tipo.
+                val uidsToFetch: List<String> = when (type.lowercase()) {
+                    "seguidores", "seguindo" -> {
+                        _uiState.update { it.copy(screenTitle = type.replaceFirstChar { it.uppercase() }) }
+                        val userSnapshot = db.collection("users").whereEqualTo("username", listId).limit(1).get().await()
+                        if (userSnapshot.isEmpty) throw Exception("Usuário '$listId' não encontrado.")
 
-                if (initialUserSnapshot.isEmpty) {
-                    _uiState.update { it.copy(isLoading = false, error = "Usuário '$username' não encontrado.") }
-                    return@launch
-                }
+                        val user = userSnapshot.documents.first().toObject(User::class.java)
+                            ?: throw Exception("Falha ao ler dados do usuário.")
 
-                val initialUser = initialUserSnapshot.documents.first().toObject(User::class.java)
-                if (initialUser == null) {
-                    _uiState.update { it.copy(isLoading = false, error = "Falha ao ler dados do usuário.") }
-                    return@launch
-                }
+                        if (type.lowercase() == "seguidores") user.followers else user.following
+                    }
+                    // NOVIDADE: Lógica para carregar a lista de confirmados de um evento.
+                    "confirmados" -> {
+                        _uiState.update { it.copy(screenTitle = "Confirmados no Evento") }
+                        val eventSnapshot = db.collection("events").document(listId).get().await()
+                        if (!eventSnapshot.exists()) throw Exception("Evento não encontrado.")
 
-                // Obter a lista de UIDs correta (seguidores ou seguindo)
-                val uidsToFetch = when (type.lowercase()) {
-                    "seguidores" -> initialUser.followers
-                    "seguindo" -> initialUser.following
+                        val event = eventSnapshot.toObject(Event::class.java)
+                            ?: throw Exception("Falha ao ler dados do evento.")
+
+                        event.attendees // Retorna a lista de UIDs dos participantes
+                    }
                     else -> emptyList()
                 }
 
@@ -61,7 +64,7 @@ class UserListViewModel : ViewModel() {
                     return@launch
                 }
 
-                // Buscar os dados completos dos usuários com base nos UIDs
+                // A lógica para buscar os perfis dos usuários com base nos UIDs é a mesma.
                 val usersSnapshot = db.collection("users")
                     .whereIn(FieldPath.documentId(), uidsToFetch)
                     .get()
