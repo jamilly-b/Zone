@@ -1,14 +1,11 @@
 package com.pdm.zone.ui.nav
 
 import android.content.Intent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.google.firebase.auth.FirebaseAuth
+import com.pdm.zone.data.SessionManager
 import com.pdm.zone.ui.screens.login.LoginActivity
 import kotlinx.coroutines.launch
 
@@ -32,8 +29,9 @@ fun MainDrawer(
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val user = FirebaseAuth.getInstance().currentUser
     val context = LocalContext.current
+
+    val sessionUser by SessionManager.currentUser.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -48,18 +46,26 @@ fun MainDrawer(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Foto do usuário
-                    AsyncImage(
-                        model = user?.photoUrl,
-                        contentDescription = "Foto do usuário",
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                    )
+                    if (!sessionUser?.profilePic.isNullOrBlank()) {
+                        AsyncImage(
+                            model = sessionUser?.profilePic,
+                            contentDescription = "Foto do usuário",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Ícone padrão",
+                            modifier = Modifier.size(100.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = username ?: user?.displayName ?: user?.email ?: "Usuário",
+                        text = sessionUser?.username ?: username ?: "Usuário",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -74,7 +80,7 @@ fun MainDrawer(
                     },
                     selected = false,
                     onClick = {
-                        FirebaseAuth.getInstance().signOut()
+                        SessionManager.clearSession()
                         context.startActivity(Intent(context, LoginActivity::class.java))
                     }
                 )
@@ -87,9 +93,9 @@ fun MainDrawer(
                     title = {},
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            if (user?.photoUrl != null) {
+                            if (!sessionUser?.profilePic.isNullOrBlank()) {
                                 AsyncImage(
-                                    model = user.photoUrl,
+                                    model = sessionUser?.profilePic,
                                     contentDescription = "Abrir menu",
                                     modifier = Modifier
                                         .size(40.dp)
@@ -103,7 +109,6 @@ fun MainDrawer(
                                 )
                             }
                         }
-
                     }
                 )
             }
@@ -114,3 +119,4 @@ fun MainDrawer(
         }
     }
 }
+

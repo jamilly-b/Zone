@@ -3,6 +3,7 @@ package com.pdm.zone.ui.screens.user
 import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.pdm.zone.data.model.User
 import com.pdm.zone.ui.theme.Primary
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.pdm.zone.R
+
 
 @Composable
 fun ProfilePage(
@@ -156,21 +162,24 @@ private fun ProfileHeader(user: User) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Foto do perfil
+        // Foto do perfil com fallback
         Box(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .background(Color.Gray.copy(alpha = 0.3f)),
+                .background(Color.Gray.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
-            // Placeholder para foto do usuário
-            if (user.profilePic != null) {
-                Text(
-                    text = user.firstName.first().toString(),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray
+            if (!user.profilePic.isNullOrBlank()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(user.profilePic)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Foto do perfil",
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
                 )
             } else {
                 Text(
@@ -184,15 +193,13 @@ private fun ProfileHeader(user: User) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Nome
         Text(
-            text = user.firstName + " " + user.lastName,
+            text = "${user.firstName} ${user.lastName}",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Primary
         )
 
-        // Username
         Text(
             text = user.username,
             fontSize = 16.sp,
@@ -201,7 +208,6 @@ private fun ProfileHeader(user: User) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Biografia
         Text(
             text = user.biography ?: "",
             fontSize = 14.sp,
