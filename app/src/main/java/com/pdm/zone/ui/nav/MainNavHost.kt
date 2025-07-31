@@ -14,6 +14,7 @@ import com.pdm.zone.ui.screens.user.UserListPage
 import androidx.navigation.navArgument
 import com.pdm.zone.data.SessionManager
 import com.pdm.zone.ui.screens.home.HomeScreenWithDrawer
+import com.pdm.zone.ui.screens.user.UserCreatedEventList
 
 //Rotas dos menus
 @Composable
@@ -63,13 +64,18 @@ fun MainNavHost(navController: NavHostController) {
             }
         }
 
-        // Rota de lista de eventos criados
+        // Rota de lista de eventos
         composable("EventList/createdEvents/{username}") { backStackEntry ->
             val username = backStackEntry.arguments?.getString("username")
-            if (username != null) {
-                ListPage(navController)
-            }
+
+            UserCreatedEventList(
+                username = username,
+                onClick = { eventId ->
+                    navController.navigate("eventDetails/$eventId")
+                }
+            )
         }
+
 
     }
 }
