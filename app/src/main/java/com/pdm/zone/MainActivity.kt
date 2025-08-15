@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
                         bottomBar = {
                             val items = listOf(
                                 BottomNavItem.HomeButton,
+                                BottomNavItem.SearchButton, // novo item de pesquisa
                                 BottomNavItem.ListButton,
                                 BottomNavItem.ProfileButton,
                             )

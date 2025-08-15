@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -36,6 +37,8 @@ sealed interface Route {
     data object List : Route
     @Serializable
     data object Profile : Route
+    @Serializable
+    data object Search : Route // nova rota de pesquisa
 }
 
 sealed class BottomNavItem(
@@ -45,6 +48,9 @@ sealed class BottomNavItem(
 ) {
     data object HomeButton :
         BottomNavItem("Início", Icons.Default.Home, Route.Home)
+
+    data object SearchButton :
+        BottomNavItem("Pesquisar", Icons.Default.Search, Route.Search) // novo botão
 
     data object ListButton :
         BottomNavItem("Próximos eventos", Icons.Default.Favorite, Route.List)

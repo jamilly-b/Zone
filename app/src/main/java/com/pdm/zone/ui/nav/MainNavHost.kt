@@ -15,6 +15,7 @@ import androidx.navigation.navArgument
 import com.pdm.zone.data.SessionManager
 import com.pdm.zone.ui.screens.home.HomeScreenWithDrawer
 import com.pdm.zone.ui.screens.user.UserCreatedEventList
+import com.pdm.zone.ui.screens.search.SearchPage
 
 //Rotas dos menus
 @Composable
@@ -28,6 +29,7 @@ fun MainNavHost(navController: NavHostController) {
             HomeScreenWithDrawer(navController, username = currentUser?.username)
         }
         composable<Route.List> { ListPage(navController) }
+        composable<Route.Search> { SearchPage(navController) } // nova rota de pesquisa
 
         // Tela de cadastro de evento
         composable("eventRegister") {
