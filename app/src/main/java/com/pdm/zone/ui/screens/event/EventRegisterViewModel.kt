@@ -1,5 +1,6 @@
 package com.pdm.zone.ui.screens.event
 
+import android.R.attr.category
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
@@ -11,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.pdm.zone.data.model.Event
+import com.pdm.zone.data.model.EventCategory
 import com.pdm.zone.data.model.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +48,7 @@ class EventRegisterViewModel : ViewModel() {
         description: String,
         location: String,
         imageUri: Uri?,
+        category: EventCategory,
         eventCalendar: Calendar,
         startTime: String,
         endTime: String
@@ -68,12 +71,13 @@ class EventRegisterViewModel : ViewModel() {
                     title = title,
                     description = description,
                     location = location,
+                    category = category,
                     imageUrl = imageUrl,
                     creatorId = currentUser.uid,
                     creatorUsername = creatorUsername,
                     eventDate = eventCalendar.time,
                     startTime = startTime,
-                    endTime = endTime,
+                    endTime = endTime
                 )
 
                 db.collection("events").add(newEvent).await()

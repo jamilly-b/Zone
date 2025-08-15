@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -168,23 +169,27 @@ private fun EventDetailsContent(
 
                     // ------------------ Ícones provisórios ------------------
                     Row {
-                        IconButton(onClick = onConfirmClick) {
-                            Icon(
-                                imageVector = if (isConfirmed) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = if (isConfirmed) "Remover confirmação" else "Confirmar Presença",
-                                tint = Primary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
                         IconButton(onClick = onInterestClick) {
                             Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Tenho Interesse",
+                                imageVector = if (isInterested) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (isInterested) "Tenho Interesse" else "Remover dos Interesses",
                                 tint = if (isInterested) Primary else Color.Gray,
                                 modifier = Modifier.size(28.dp)
                             )
                         }
                     }
+                }
+
+                Button(
+                    onClick = onConfirmClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isConfirmed) Primary else Color.LightGray,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(50),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                ) {
+                    Text("Eu vou")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

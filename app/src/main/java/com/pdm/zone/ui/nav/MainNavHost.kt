@@ -70,12 +70,12 @@ fun MainNavHost(navController: NavHostController) {
 
             UserCreatedEventList(
                 username = username,
-                onClick = { eventId ->
-                    navController.navigate("eventDetails/$eventId")
-                }
+                onClick = {
+                    navController.popBackStack()
+                },
+                navController = navController
             )
         }
-
 
     }
 }

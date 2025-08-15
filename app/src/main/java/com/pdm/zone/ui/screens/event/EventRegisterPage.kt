@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.pdm.zone.ui.screens.event
 
 import android.app.DatePickerDialog
@@ -11,6 +13,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.pdm.zone.data.model.EventCategory
 import com.pdm.zone.ui.components.DataField
 import com.pdm.zone.ui.nav.BackHeader
 import java.text.SimpleDateFormat
@@ -40,6 +46,7 @@ fun EventRegisterPage(
     var location by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedCategory by remember { mutableStateOf<EventCategory?>(null) }
 
     val selectedCalendar = remember { Calendar.getInstance() }
     var dateText by remember { mutableStateOf("") }
@@ -119,6 +126,14 @@ fun EventRegisterPage(
 
         DataField(value = title, onValueChange = { title = it }, label = "Título", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
         DataField(value = location, onValueChange = { location = it }, label = "Local", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
+        DataField(value = description, onValueChange = { description = it }, label = "Descrição", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
+
+        CategoryDropdown(
+            selectedCategory = selectedCategory,
+            onCategorySelected = { selectedCategory = it },
+            enabled = !uiState.isLoading
+        )
+
         ClickableOutlinedTextField(value = dateText, onClick = { datePickerDialog.show() }, label = "Data", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
 
         val startTimePicker = rememberTimePicker(context) { hour, minute ->
@@ -140,8 +155,6 @@ fun EventRegisterPage(
             ClickableOutlinedTextField(value = endTimeText, onClick = { endTimePicker.show() }, label = "Fim", modifier = Modifier.weight(1f), enabled = !uiState.isLoading)
         }
 
-        DataField(value = description, onValueChange = { description = it }, label = "Descrição", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
-
         Button(
             onClick = {
                 viewModel.createEvent(
@@ -149,6 +162,7 @@ fun EventRegisterPage(
                     title = title,
                     description = description,
                     location = location,
+                    category = selectedCategory!!,
                     imageUri = imageUri,
                     eventCalendar = selectedCalendar,
                     startTime = startTimeText,
@@ -156,7 +170,7 @@ fun EventRegisterPage(
                 )
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading,
+            enabled = !uiState.isLoading && selectedCategory != null,
             shape = MaterialTheme.shapes.medium
         ) {
             if (uiState.isLoading) {
@@ -167,6 +181,48 @@ fun EventRegisterPage(
                 )
             } else {
                 Text("Cadastrar Evento")
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryDropdown(
+    selectedCategory: EventCategory?,
+    onCategorySelected: (EventCategory) -> Unit,
+    enabled: Boolean = true
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedCategory?.displayName ?: "",
+            onValueChange = {},
+            readOnly = true,
+            enabled = enabled,
+            label = { Text("Categoria") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            EventCategory.values().forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(category.displayName) },
+                    onClick = {
+                        onCategorySelected(category)
+                        expanded = false
+                    }
+                )
             }
         }
     }
