@@ -51,7 +51,11 @@ class EventRegisterViewModel : ViewModel() {
         category: EventCategory,
         eventCalendar: Calendar,
         startTime: String,
-        endTime: String
+        endTime: String,
+        placeId: String?,
+        latitude: Double?,
+        longitude: Double?,
+        address: String?
     ) {
         if (title.isBlank() || description.isBlank() || location.isBlank() || imageUri == null || startTime.isBlank() || endTime.isBlank()) {
             _uiState.update { it.copy(error = "Por favor, preencha todos os campos e selecione uma imagem.") }
@@ -77,7 +81,11 @@ class EventRegisterViewModel : ViewModel() {
                     creatorUsername = creatorUsername,
                     eventDate = eventCalendar.time,
                     startTime = startTime,
-                    endTime = endTime
+                    endTime = endTime,
+                    placeId = placeId,
+                    latitude = latitude,
+                    longitude = longitude,
+                    address = address
                 )
 
                 db.collection("events").add(newEvent).await()

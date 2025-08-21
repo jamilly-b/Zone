@@ -1,9 +1,21 @@
+import java.util.Properties
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
     alias(libs.plugins.google.gms.google.services)
+}
+
+val secretsPropsFileRoot = rootProject.file("secrets.properties")
+val secretsPropsFileModule = project.file("secrets.properties")
+val secretsProps = Properties().apply {
+    when {
+        secretsPropsFileRoot.exists() -> load(secretsPropsFileRoot.inputStream())
+        secretsPropsFileModule.exists() -> load(secretsPropsFileModule.inputStream())
+    }
 }
 
 android {
@@ -18,6 +30,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val placesKey = secretsProps.getProperty("PLACES_API_KEY")
+            ?: System.getenv("PLACES_API_KEY")
+            ?: ""
+        buildConfigField("String", "PLACES_API_KEY", "\"$placesKey\"")
+        manifestPlaceholders["PLACES_API_KEY"] = placesKey
     }
 
     buildTypes {
@@ -38,6 +55,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -66,4 +84,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("androidx.navigation:navigation-runtime-ktx:2.7.3")
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.google.android.libraries.places:places:3.5.0")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.material:material:1.12.0")
 }

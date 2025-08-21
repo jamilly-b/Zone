@@ -1,5 +1,9 @@
 package com.pdm.zone.ui.screens.event
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,12 +32,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.pdm.zone.R
 import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.theme.Primary
 import com.pdm.zone.ui.theme.Secondary
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.ui.draw.clip
+import com.google.android.gms.maps.GoogleMap
+import com.pdm.zone.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,13 +218,107 @@ private fun EventDetailsContent(
                 Text(
                     text = "Criado por @${event.creatorUsername}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Primary,
+                    modifier = Modifier.clickable {
+                        navController.navigate("profile/${event.creatorUsername}")
+                    }
                 )
+                Spacer(modifier = Modifier.height(24.dp))
+                EventLocationMap(event)
             }
         }
     }
 }
 
+@Composable
+private fun EventLocationMap(event: Event) {
+    val lat = event.latitude
+    val lng = event.longitude
+    val context = LocalContext.current
+
+//    // Logs de diagnóstico da chave
+//    LaunchedEffect(Unit) {
+//        val buildConfigKey = BuildConfig.PLACES_API_KEY
+//        val appInfo = try {
+//            context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
+//        } catch (e: Exception) { null }
+//        val manifestKey = appInfo?.metaData?.getString("com.google.android.geo.API_KEY")
+//        Log.d("MAPS_KEY_DEBUG", "BuildConfig.PLACES_API_KEY='${'$'}buildConfigKey'")
+//        Log.d("MAPS_KEY_DEBUG", "Manifest meta-data com.google.android.geo.API_KEY='${'$'}manifestKey'")
+//    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 180.dp)
+    ) {
+        Text(
+            text = "Localização",
+            style = MaterialTheme.typography.titleMedium,
+            color = Primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        if (lat != null && lng != null) {
+            val mapView = remember { MapView(context) }
+            // Lifecycle handling
+            DisposableEffect(mapView) {
+                mapView.onCreate(null)
+                mapView.onResume()
+                onDispose {
+                    mapView.onPause()
+                    mapView.onDestroy()
+                }
+            }
+            val target = remember(lat, lng) { LatLng(lat, lng) }
+            // Configure map once
+            LaunchedEffect(mapView, target) {
+                mapView.getMapAsync { googleMap: GoogleMap ->
+                    googleMap.uiSettings.isMapToolbarEnabled = false
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(target, 15f))
+                    googleMap.clear()
+                    googleMap.addMarker(
+                        MarkerOptions()
+                            .position(target)
+                            .title(event.title)
+                            .snippet(event.location)
+                    )
+                }
+            }
+            fun openExternalMap() {
+                val gmmIntentUri = Uri.parse("geo:$lat,$lng?q=$lat,$lng(${Uri.encode(event.title.ifBlank { "Evento" })})")
+                val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply { setPackage("com.google.android.apps.maps") }
+                if (mapIntent.resolveActivity(context.packageManager) == null) {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng"))
+                    )
+                } else context.startActivity(mapIntent)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { openExternalMap() }
+            ) {
+                AndroidView(factory = { mapView }) { mView ->
+                    // Add listeners after map ready
+                    mView.getMapAsync { googleMap ->
+                        googleMap.setOnMapClickListener { openExternalMap() }
+                        googleMap.setOnMarkerClickListener {
+                            openExternalMap(); true
+                        }
+                    }
+                }
+            }
+        } else {
+            Text(
+                text = "Erro no mapa da localização.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+        }
+    }
+}
 
 @Composable
 fun EventInfoSection(event: Event) {

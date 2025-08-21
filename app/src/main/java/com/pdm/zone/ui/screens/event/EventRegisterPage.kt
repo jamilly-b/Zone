@@ -27,6 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.AutocompletePrediction
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
+import com.pdm.zone.BuildConfig
 import com.pdm.zone.data.model.EventCategory
 import com.pdm.zone.ui.components.DataField
 import com.pdm.zone.ui.nav.BackHeader
@@ -47,6 +54,12 @@ fun EventRegisterPage(
     var description by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedCategory by remember { mutableStateOf<EventCategory?>(null) }
+
+    var placeId by remember { mutableStateOf<String?>(null) }
+    var latitude by remember { mutableStateOf<Double?>(null) }
+    var longitude by remember { mutableStateOf<Double?>(null) }
+    var fullAddress by remember { mutableStateOf<String?>(null) }
+    var predictions by remember { mutableStateOf<List<AutocompletePrediction>>(emptyList()) }
 
     val selectedCalendar = remember { Calendar.getInstance() }
     var dateText by remember { mutableStateOf("") }
@@ -93,6 +106,39 @@ fun EventRegisterPage(
         }
     }
 
+    // Places init
+    val placesClient: PlacesClient = remember {
+        if (!Places.isInitialized()) {
+            Places.initialize(context, BuildConfig.PLACES_API_KEY)
+        }
+        Places.createClient(context)
+    }
+
+    fun searchPlaces(query: String) {
+        if (query.length < 3) { predictions = emptyList(); return }
+        val request = FindAutocompletePredictionsRequest.builder()
+            .setQuery(query)
+            .build()
+        placesClient.findAutocompletePredictions(request)
+            .addOnSuccessListener { response ->
+                // Não altera texto do usuário, apenas mostra lista
+                predictions = response.autocompletePredictions
+            }
+            .addOnFailureListener { predictions = emptyList() }
+    }
+
+    fun fetchPlaceDetails(id: String) {
+        val placeRequest = FetchPlaceRequest.newInstance(id, listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.ADDRESS))
+        placesClient.fetchPlace(placeRequest)
+            .addOnSuccessListener { result ->
+                val place = result.place
+                placeId = place.id
+                latitude = place.latLng?.latitude
+                longitude = place.latLng?.longitude
+                fullAddress = place.address
+            }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -125,7 +171,56 @@ fun EventRegisterPage(
         }
 
         DataField(value = title, onValueChange = { title = it }, label = "Título", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
-        DataField(value = location, onValueChange = { location = it }, label = "Local", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
+
+        // Campo de Local com Autocomplete
+        Column(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = location,
+                onValueChange = {
+                    location = it
+                    placeId = null
+                    latitude = null
+                    longitude = null
+                    fullAddress = null
+                    searchPlaces(it)
+                },
+                label = { Text("Local") },
+                enabled = !uiState.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
+            // Lista de sugestões (não bloqueia foco)
+            if (predictions.isNotEmpty()) {
+                Surface(
+                    tonalElevation = 2.dp,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        predictions.take(5).forEach { prediction ->
+                            Text(
+                                text = prediction.getFullText(null).toString(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        // Ao selecionar, preenche e limpa lista
+                                        location = prediction.getFullText(null).toString()
+                                        fetchPlaceDetails(prediction.placeId)
+                                        predictions = emptyList()
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            if (fullAddress != null) {
+                Text(fullAddress!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+
         DataField(value = description, onValueChange = { description = it }, label = "Descrição", enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth())
 
         CategoryDropdown(
@@ -166,7 +261,11 @@ fun EventRegisterPage(
                     imageUri = imageUri,
                     eventCalendar = selectedCalendar,
                     startTime = startTimeText,
-                    endTime = endTimeText
+                    endTime = endTimeText,
+                    placeId = placeId,
+                    latitude = latitude,
+                    longitude = longitude,
+                    address = fullAddress
                 )
             },
             modifier = Modifier.fillMaxWidth(),

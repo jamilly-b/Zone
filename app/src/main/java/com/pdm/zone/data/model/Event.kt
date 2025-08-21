@@ -17,6 +17,12 @@ data class Event(
     var creatorId: String = "",
     var creatorUsername: String = "",
 
+    // NOVOS CAMPOS GEO
+    var placeId: String? = null,
+    var latitude: Double? = null,
+    var longitude: Double? = null,
+    var address: String? = null,
+
     // Campos de data e hora
     @ServerTimestamp
     var eventDate: Date? = null,
@@ -45,6 +51,10 @@ data class Event(
         imageUrl = null,
         creatorId = "",
         creatorUsername = "",
+        placeId = null,
+        latitude = null,
+        longitude = null,
+        address = null,
         eventDate = null,
         startTime = null,
         endTime = null,
