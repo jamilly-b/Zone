@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -26,11 +27,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.pdm.zone.data.model.User
+import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.theme.Primary
+import com.pdm.zone.ui.components.EventCard
+import com.pdm.zone.ui.components.CompactEventCard
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.pdm.zone.R
-
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun ProfilePage(
@@ -95,6 +100,81 @@ fun ProfilePage(
                 tabs = tabs,
                 onTabSelected = { selectedTab = it }
             )
+        }
+
+        when (selectedTab) {
+            0 -> {
+                if (uiState.isLoadingEvents) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else if (uiState.upcomingEvents.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Nenhum evento próximo",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(uiState.upcomingEvents) { event ->
+                        CompactEventCard(
+                            event = event,
+                            onCardClick = { navController.navigate("eventDetails/${it.id}") }
+                        )
+                    }
+                }
+            }
+            1 -> {
+                if (uiState.isLoadingEvents) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else if (uiState.pastEvents.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Nenhum evento passado",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(uiState.pastEvents) { event ->
+                        CompactEventCard(
+                            event = event,
+                            onCardClick = { navController.navigate("eventDetails/${it.id}") }
+                        )
+                    }
+                }
+            }
         }
     }
 }

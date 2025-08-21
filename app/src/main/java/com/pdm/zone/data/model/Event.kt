@@ -1,6 +1,8 @@
 package com.pdm.zone.data.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
@@ -22,7 +24,17 @@ data class Event(
     var endTime: String? = null,
 
     var attendees: List<String> = emptyList(),
-    var interestedUsers: List<String> = emptyList()
+    var interestedUsers: List<String> = emptyList(),
+
+    // Adicionamos estas propriedades com PropertyName para que o Firestore as reconheça
+    // mesmo sendo campos calculados no lado do cliente
+    @get:PropertyName("confirmedCount")
+    @PropertyName("confirmedCount")
+    var _confirmedCount: Int = 0,
+
+    @get:PropertyName("interestedCount")
+    @PropertyName("interestedCount")
+    var _interestedCount: Int = 0
 ) {
     constructor() : this(
         id = "",
@@ -40,9 +52,12 @@ data class Event(
         interestedUsers = emptyList()
     )
 
+    // Propriedades calculadas
+    @get:Exclude  // Excluir do Firestore, pois usamos os campos _confirmedCount e _interestedCount para serialização
     val confirmedCount: Int
         get() = attendees.size
 
+    @get:Exclude  // Excluir do Firestore, pois usamos os campos _interestedCount e _interestedCount para serialização
     val interestedCount: Int
         get() = interestedUsers.size
 }

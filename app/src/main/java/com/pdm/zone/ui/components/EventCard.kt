@@ -22,6 +22,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.pdm.zone.R
 import com.pdm.zone.data.model.Event
+import com.pdm.zone.ui.theme.Neutral40
 import com.pdm.zone.ui.theme.Primary
 import com.pdm.zone.ui.theme.Secondary
 import java.text.SimpleDateFormat
@@ -67,10 +68,10 @@ fun EventCard(
 
             Text(
                 text = event.title,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Primary,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -89,43 +90,32 @@ fun EventCard(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = event.location,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         color = Secondary
                     )
                 }
 
-                // Alterado para formatar a data e hora do novo modelo
                 Text(
                     text = formatEventDateTime(event),
                     fontSize = 14.sp,
                     color = Secondary,
-                    fontWeight = FontWeight.Medium
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
             Text(
                 text = event.description,
-                fontSize = 12.sp,
-                color = Color.DarkGray,
-                maxLines = 2,
+                fontSize = 14.sp,
+                color = Neutral40,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
-// Função auxiliar para formatar a data e hora
-@Composable
+// Função auxiliar para formatação de data e hora
 private fun formatEventDateTime(event: Event): String {
-    val dateFormatter = remember { SimpleDateFormat("dd/MM", Locale("pt", "BR")) }
-    return event.eventDate?.let { date ->
-        val formattedDate = dateFormatter.format(date)
-        if (event.startTime != null) {
-            "$formattedDate | ${event.startTime}"
-        } else {
-            formattedDate
-        }
-    } ?: ""
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val date = event.eventDate?.let { dateFormat.format(it) } ?: "Data não definida"
+    return date
 }

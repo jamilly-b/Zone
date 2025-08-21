@@ -83,6 +83,8 @@ class EventDetailsViewModel : ViewModel() {
             } else {
                 event.attendees + currentUserId
             }
+
+            // Atualizando o estado local imediatamente para feedback instantâneo
             _uiState.update {
                 it.copy(
                     isCurrentUserConfirmed = !isCurrentlyConfirmed,
@@ -97,8 +99,24 @@ class EventDetailsViewModel : ViewModel() {
                 } else {
                     FieldValue.arrayUnion(currentUserId)
                 }
+
+                // Atualiza o evento no Firestore
                 eventRef.update("attendees", fieldUpdate).await()
+
+                // Se o usuário desconfirmar presença e estava interessado, mantém na lista de interessados
+                if (isCurrentlyConfirmed && !currentState.isCurrentUserInterested) {
+                    eventRef.update("interestedUsers", FieldValue.arrayUnion(currentUserId)).await()
+                    _uiState.update {
+                        it.copy(
+                            isCurrentUserInterested = true,
+                            event = it.event?.copy(
+                                interestedUsers = it.event.interestedUsers + currentUserId
+                            )
+                        )
+                    }
+                }
             } catch (e: Exception) {
+                // Em caso de erro, revertemos para o estado anterior
                 _uiState.update {
                     currentState.copy(error = "Ocorreu uma falha. Tente novamente.")
                 }

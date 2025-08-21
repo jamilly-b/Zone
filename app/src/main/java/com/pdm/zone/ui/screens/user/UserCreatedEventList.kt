@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
@@ -21,7 +22,10 @@ import coil.request.ImageRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pdm.zone.R
 import com.pdm.zone.data.model.Event
+import com.pdm.zone.ui.components.CompactEventCard
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +35,8 @@ fun UserCreatedEventList(
     navController: NavHostController,
     onClick: (String) -> Unit
 )
-{    val db = FirebaseFirestore.getInstance()
+{
+    val db = FirebaseFirestore.getInstance()
     var events by remember { mutableStateOf<List<Event>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -70,44 +75,19 @@ fun UserCreatedEventList(
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             when {
-                isLoading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-                events.isEmpty() -> Text("Nenhum evento encontrado.", modifier = Modifier.padding(16.dp))
-                else -> LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                events.isEmpty() -> Text("Nenhum evento encontrado.", modifier = Modifier.align(Alignment.Center))
+                else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(events) { event ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Row (modifier = modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable { onClick(event.id) },
-                                verticalAlignment = Alignment.CenterVertically)
-                            {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(event.imageUrl)
-                                        .crossfade(true)
-                                        .build(),
-                                    placeholder = painterResource(R.drawable.placeholder_event),
-                                    contentDescription = event.title,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .padding(end = 8.dp)
-                                )
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(text = event.title, style = MaterialTheme.typography.titleMedium)
-                                    Text(text = event.description, style = MaterialTheme.typography.bodyMedium)
-                                }
+                        CompactEventCard(
+                            event = event,
+                            onCardClick = {
+                                onClick(it.id)
                             }
-
-                        }
+                        )
                     }
                 }
             }
         }
     }
 }
-
