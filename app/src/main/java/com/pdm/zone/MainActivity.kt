@@ -58,9 +58,11 @@ class MainActivity : ComponentActivity() {
             } else {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-                val userUsername = SessionManager.currentUser.collectAsState().value?.username
-                val showFab = userUsername != null && currentRoute == "profile/$userUsername"
+                val destinationRoute = navBackStackEntry?.destination?.route
+                val backStackUsername = navBackStackEntry?.arguments?.getString("username")
+                val userState by SessionManager.currentUser.collectAsState()
+                val userUsername = userState?.username
+                val showFab = destinationRoute == "profile/{username}" && backStackUsername == userUsername
                 ZoneTheme {
                     Scaffold(
                         bottomBar = {

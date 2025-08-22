@@ -29,9 +29,9 @@ fun DataField(
         enabled = enabled,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = colorScheme.primary,
-            unfocusedBorderColor = colorScheme.secondary,
+            unfocusedBorderColor = colorScheme.primary,
             focusedLabelColor = colorScheme.primary,
-            unfocusedLabelColor = colorScheme.secondary,
+            unfocusedLabelColor = colorScheme.primary,
             cursorColor = colorScheme.primary,
             focusedContainerColor = colorScheme.surface,
             unfocusedContainerColor = colorScheme.surface,
@@ -61,9 +61,9 @@ fun PasswordField(
         enabled = enabled,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = colorScheme.primary,
-            unfocusedBorderColor = colorScheme.secondary,
+            unfocusedBorderColor = colorScheme.primary,
             focusedLabelColor = colorScheme.primary,
-            unfocusedLabelColor = colorScheme.secondary,
+            unfocusedLabelColor = colorScheme.primary,
             cursorColor = colorScheme.primary,
             focusedContainerColor = colorScheme.surface,
             unfocusedContainerColor = colorScheme.surface,
