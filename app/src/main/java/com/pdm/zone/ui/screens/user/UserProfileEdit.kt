@@ -37,6 +37,7 @@ import com.pdm.zone.ui.theme.ZoneTheme
 import androidx.core.view.WindowCompat
 import java.util.Calendar
 import androidx.core.net.toUri
+import kotlinx.coroutines.tasks.await
 
 class UserProfileEdit : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -214,41 +215,49 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                if (firstName.isBlank() || lastName.isBlank() || userName.isBlank() || dateOfBirth.isBlank()) {
+                if (firstName.isBlank() || lastName.isBlank() || dateOfBirth.isBlank() ||
+                    (isNewUser && userName.isBlank())
+                ) {
                     Toast.makeText(activity, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
                 } else {
                     val userId = FirebaseAuth.getInstance().currentUser?.uid
                     if (userId != null) {
                         val db = FirebaseFirestore.getInstance()
                         val timestamp = System.currentTimeMillis().toString()
-
                         val profilePicStringToSave = imageUri?.toString() ?: ""
 
-                        val user = com.pdm.zone.data.model.User(
-                            uid = userId,
-                            firstName = firstName,
-                            lastName = lastName,
-                            username = userName,
-                            profilePic = profilePicStringToSave,
-                            biography = biography,
-                            dateOfBirth = dateOfBirth,
-                            createdTime = timestamp,
-                            followers = emptyList(),
-                            following = emptyList(),
-                            createdEvents = emptyList(),
-                            favoriteEvents = emptyList()
-                        )
-
-                        db.collection("users").document(userId)
-                            .set(user)
-                            .addOnSuccessListener {
-                                Toast.makeText(activity, "Perfil salvo com sucesso!", Toast.LENGTH_SHORT).show()
-                                activity?.startActivity(Intent(activity, MainActivity::class.java))
-                                activity?.finish()
-                            }
-                            .addOnFailureListener { e ->
-                                Toast.makeText(activity, "Erro ao salvar perfil: ${e.message}", Toast.LENGTH_LONG).show()
-                            }
+                        // Se for novo usuário, verificar se o username já existe
+                        if (isNewUser) {
+                            db.collection("users")
+                                .whereEqualTo("username", userName)
+                                .get()
+                                .addOnSuccessListener { documents ->
+                                    if (!documents.isEmpty) {
+                                        // Já existe esse username
+                                        Toast.makeText(
+                                            activity,
+                                            "Esse nome de usuário já está em uso. Escolha outro.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    } else {
+                                        // Username disponível - salvar normalmente
+                                        saveUser(
+                                            db, userId, firstName, lastName, userName,
+                                            profilePicStringToSave, biography, dateOfBirth, timestamp,
+                                            activity
+                                        )
+                                    }
+                                }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(activity, "Erro ao verificar username: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                        } else {
+                            saveUser(
+                                db, userId, firstName, lastName, userName,
+                                profilePicStringToSave, biography, dateOfBirth, timestamp,
+                                activity
+                            )
+                        }
                     } else {
                         Toast.makeText(activity, "Usuário não autenticado!", Toast.LENGTH_SHORT).show()
                     }
@@ -262,5 +271,45 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
         ) {
             Text("Concluir", fontWeight = FontWeight.Bold)
         }
+
     }
+}
+
+fun saveUser(
+    db: FirebaseFirestore,
+    userId: String,
+    firstName: String,
+    lastName: String,
+    userName: String,
+    profilePic: String,
+    biography: String,
+    dateOfBirth: String,
+    timestamp: String,
+    activity: Activity?
+) {
+    val user = com.pdm.zone.data.model.User(
+        uid = userId,
+        firstName = firstName,
+        lastName = lastName,
+        username = userName,
+        profilePic = profilePic,
+        biography = biography,
+        dateOfBirth = dateOfBirth,
+        createdTime = timestamp,
+        followers = emptyList(),
+        following = emptyList(),
+        createdEvents = emptyList(),
+        favoriteEvents = emptyList()
+    )
+
+    db.collection("users").document(userId)
+        .set(user)
+        .addOnSuccessListener {
+            Toast.makeText(activity, "Perfil salvo com sucesso!", Toast.LENGTH_SHORT).show()
+            activity?.startActivity(Intent(activity, MainActivity::class.java))
+            activity?.finish()
+        }
+        .addOnFailureListener { e ->
+            Toast.makeText(activity, "Erro ao salvar perfil: ${e.message}", Toast.LENGTH_LONG).show()
+        }
 }
