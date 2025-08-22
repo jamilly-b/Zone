@@ -1,7 +1,6 @@
 package com.pdm.zone.ui.nav
 
-import android.net.http.SslCertificate.restoreState
-import android.net.http.SslCertificate.saveState
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -12,23 +11,17 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.pdm.zone.ui.theme.Primary
 import kotlinx.serialization.Serializable
-import androidx.compose.material3.*
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.firestore
+import androidx.compose.ui.unit.dp
 import com.pdm.zone.data.SessionManager
+import androidx.compose.ui.Modifier
 
 sealed interface Route {
     @Serializable
@@ -38,7 +31,7 @@ sealed interface Route {
     @Serializable
     data object Profile : Route
     @Serializable
-    data object Search : Route // nova rota de pesquisa
+    data object Search : Route
 }
 
 sealed class BottomNavItem(
@@ -50,7 +43,7 @@ sealed class BottomNavItem(
         BottomNavItem("Início", Icons.Default.Home, Route.Home)
 
     data object SearchButton :
-        BottomNavItem("Pesquisar", Icons.Default.Search, Route.Search) // novo botão
+        BottomNavItem("Pesquisar", Icons.Default.Search, Route.Search)
 
     data object ListButton :
         BottomNavItem("Próximos eventos", Icons.Default.Favorite, Route.List)
@@ -63,53 +56,45 @@ sealed class BottomNavItem(
 fun BottomNavBar(
     navController: NavHostController,
     items: List<BottomNavItem>
-    // 1. Removido o parâmetro 'currentUserId', que não é mais necessário
 ) {
-    // 2. Usando o SessionManager como única fonte para o usuário logado.
     val currentUser by SessionManager.currentUser.collectAsState()
 
     NavigationBar(contentColor = Primary) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
-        // 3. O LaunchedEffect antigo foi completamente REMOVIDO daqui.
-
         items.forEach { item ->
+            val targetRoute = when (item) {
+                is BottomNavItem.ProfileButton -> currentUser?.username?.let { "profile/$it" }
+                else -> item.route::class.qualifiedName
+            }
             NavigationBarItem(
-                icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
-                label = { Text(text = item.title, fontSize = 12.sp) },
-                alwaysShowLabel = true,
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.title,
+                        modifier = Modifier.size(32.dp)
+                    )},
                 selected = when (item) {
-                    // Compara a rota atual com a rota de perfil, usando o username do SessionManager
-                    is BottomNavItem.ProfileButton -> currentRoute == "profile/${currentUser?.username}"
-                    // Compara outras rotas pelo seu nome de classe qualificado
+                    is BottomNavItem.ProfileButton -> currentRoute == targetRoute
                     else -> currentRoute == item.route::class.qualifiedName
                 },
-                // 4. Lógica de clique TOTALMENTE CORRIGIDA
                 onClick = {
-                    when (item.route) {
-                        is Route.Profile -> {
-                            // Ação para o perfil: só navega se tiver um username
-                            currentUser?.username?.let { username ->
-                                navController.navigate("profile/$username") {
-                                    // Comportamento padrão para itens da bottom bar
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
+                    targetRoute?.let { base ->
+                        // Pop tudo acima da rota base (se existir) para garantir retorno à raiz da aba
+                        var popped = true
+                        while (popped) {
+                            popped = navController.popBackStack(base, inclusive = false)
                         }
-                        else -> {
-                            // Ação para outros itens (Home, List)
-                            navController.navigate(item.route) {
-                                // Comportamento padrão para itens da bottom bar
+                        // Se já estamos na raiz daquela aba, não navega novamente (evita recriar)
+                        if (navController.currentBackStackEntry?.destination?.route != base) {
+                            navController.navigate(base) {
+                                launchSingleTop = true
+                                restoreState = true
+                                // Remove outras stacks até a startDestination apenas se ela não for a própria base
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         }
                     }

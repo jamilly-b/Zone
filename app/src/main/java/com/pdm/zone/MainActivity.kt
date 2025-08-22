@@ -15,13 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.pdm.zone.data.SessionManager
-import com.pdm.zone.ui.nav.MainDrawer
 import com.pdm.zone.ui.nav.BottomNavBar
 import com.pdm.zone.ui.nav.BottomNavItem
-import com.pdm.zone.ui.nav.MainDrawer
 import com.pdm.zone.ui.nav.MainNavHost
 import com.pdm.zone.ui.screens.login.LoginActivity
 import com.pdm.zone.ui.theme.ZoneTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.pdm.zone.ui.theme.Primary
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -55,22 +57,30 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+                val userUsername = SessionManager.currentUser.collectAsState().value?.username
+                val showFab = userUsername != null && currentRoute == "profile/$userUsername"
                 ZoneTheme {
                     Scaffold(
                         bottomBar = {
                             val items = listOf(
                                 BottomNavItem.HomeButton,
-                                BottomNavItem.SearchButton, // novo item de pesquisa
+                                BottomNavItem.SearchButton,
                                 BottomNavItem.ListButton,
                                 BottomNavItem.ProfileButton,
                             )
                             BottomNavBar(navController = navController, items = items)
                         },
                         floatingActionButton = {
-                            FloatingActionButton(onClick = {
-                                navController.navigate("eventRegister")
-                            }) {
-                                Icon(Icons.Default.Add, contentDescription = "Adicionar")
+                            if (showFab) {
+                                FloatingActionButton(
+                                    onClick = { navController.navigate("eventRegister") },
+                                    containerColor = Primary,
+                                    contentColor = Color.White
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = "Adicionar")
+                                }
                             }
                         }
                     ) { innerPadding ->
