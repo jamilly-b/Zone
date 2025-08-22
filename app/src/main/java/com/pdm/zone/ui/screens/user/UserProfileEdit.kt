@@ -61,6 +61,7 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
     var dateOfBirth by rememberSaveable { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var biography by rememberSaveable { mutableStateOf("") }
+    var isNewUser by remember { mutableStateOf(true) }
 
     val context = LocalContext.current
     val activity = LocalContext.current as? Activity
@@ -86,6 +87,8 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
+                        isNewUser = false
+
                         firstName = document.getString("firstName") ?: ""
                         lastName = document.getString("lastName") ?: ""
                         userName = document.getString("username") ?: ""
@@ -94,6 +97,8 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
 
                         val profilePicString = document.getString("profilePic")
                         imageUri = profilePicString?.toUri()
+                    } else {
+                        isNewUser = true
                     }
                 }
                 .addOnFailureListener {
@@ -166,7 +171,18 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isNewUser) {
+            DataField(
+                value = userName,
+                onValueChange = { userName = it },
+                label = "Nome de usuário",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         OutlinedTextField(
             value = dateOfBirth,
@@ -239,7 +255,10 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = firstName.isNotEmpty() && lastName.isNotEmpty() && userName.isNotEmpty() && dateOfBirth.isNotEmpty()
+            enabled = firstName.isNotEmpty() &&
+                    lastName.isNotEmpty() &&
+                    dateOfBirth.isNotEmpty() &&
+                    (!isNewUser || userName.isNotEmpty())
         ) {
             Text("Concluir", fontWeight = FontWeight.Bold)
         }
