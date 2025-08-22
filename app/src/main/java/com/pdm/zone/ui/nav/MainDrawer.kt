@@ -89,28 +89,28 @@ fun MainDrawer(
     ) {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {},
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            if (!sessionUser?.profilePic.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = sessionUser?.profilePic,
-                                    contentDescription = "Abrir menu",
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Abrir menu",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                            }
-                        }
-                    }
-                )
+//                TopAppBar(
+//                    title = {},
+//                    navigationIcon = {
+//                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+//                            if (!sessionUser?.profilePic.isNullOrBlank()) {
+//                                AsyncImage(
+//                                    model = sessionUser?.profilePic,
+//                                    contentDescription = "Abrir menu",
+//                                    modifier = Modifier
+//                                        .size(40.dp)
+//                                        .clip(CircleShape)
+//                                )
+//                            } else {
+//                                Icon(
+//                                    imageVector = Icons.Default.AccountCircle,
+//                                    contentDescription = "Abrir menu",
+//                                    modifier = Modifier.size(40.dp)
+//                                )
+//                            }
+//                        }
+//                    }
+//                )
             }
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
