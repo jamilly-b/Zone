@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.pdm.zone.MainActivity
 import com.pdm.zone.ui.components.DataField
 import com.pdm.zone.ui.theme.ZoneTheme
@@ -63,6 +64,8 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var biography by rememberSaveable { mutableStateOf("") }
     var isNewUser by remember { mutableStateOf(true) }
+    var originalProfilePic by rememberSaveable { mutableStateOf<String?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val activity = LocalContext.current as? Activity
@@ -97,6 +100,7 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
                         biography = document.getString("biography") ?: ""
 
                         val profilePicString = document.getString("profilePic")
+                        originalProfilePic = profilePicString
                         imageUri = profilePicString?.toUri()
                     } else {
                         isNewUser = true
@@ -219,44 +223,40 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
                     (isNewUser && userName.isBlank())
                 ) {
                     Toast.makeText(activity, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
-                } else {
+                } else if (!isSaving) {
                     val userId = FirebaseAuth.getInstance().currentUser?.uid
                     if (userId != null) {
+                        isSaving = true
                         val db = FirebaseFirestore.getInstance()
                         val timestamp = System.currentTimeMillis().toString()
-                        val profilePicStringToSave = imageUri?.toString() ?: ""
 
-                        // Se for novo usuário, verificar se o username já existe
-                        if (isNewUser) {
-                            db.collection("users")
-                                .whereEqualTo("username", userName)
-                                .get()
-                                .addOnSuccessListener { documents ->
-                                    if (!documents.isEmpty) {
-                                        // Já existe esse username
-                                        Toast.makeText(
-                                            activity,
-                                            "Esse nome de usuário já está em uso. Escolha outro.",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    } else {
-                                        // Username disponível - salvar normalmente
-                                        saveUser(
-                                            db, userId, firstName, lastName, userName,
-                                            profilePicStringToSave, biography, dateOfBirth, timestamp,
-                                            activity
-                                        )
-                                    }
-                                }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(activity, "Erro ao verificar username: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                        } else {
+                        fun proceedSave(finalUrl: String) {
                             saveUser(
                                 db, userId, firstName, lastName, userName,
-                                profilePicStringToSave, biography, dateOfBirth, timestamp,
+                                finalUrl, biography, dateOfBirth, timestamp,
                                 activity
                             )
+                            isSaving = false
+                        }
+
+                        val hasNewLocalImage = imageUri != null && imageUri.toString() != originalProfilePic
+                        if (hasNewLocalImage) {
+                            val storageRef = FirebaseStorage.getInstance().reference.child("profilePics/${userId}.jpg")
+                            storageRef.putFile(imageUri!!)
+                                .continueWithTask { task ->
+                                    if (!task.isSuccessful) throw task.exception ?: Exception("Upload falhou")
+                                    storageRef.downloadUrl
+                                }
+                                .addOnSuccessListener { uri ->
+                                    proceedSave(uri.toString())
+                                }
+                                .addOnFailureListener { e ->
+                                    isSaving = false
+                                    Toast.makeText(activity, "Falha upload imagem: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                        } else {
+                            // Mantém URL anterior ou vazio se novo usuário sem imagem
+                            proceedSave(originalProfilePic ?: "")
                         }
                     } else {
                         Toast.makeText(activity, "Usuário não autenticado!", Toast.LENGTH_SHORT).show()
@@ -264,12 +264,16 @@ fun UserRegisterPage(modifier: Modifier = Modifier) {
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = firstName.isNotEmpty() &&
+            enabled = !isSaving && firstName.isNotEmpty() &&
                     lastName.isNotEmpty() &&
                     dateOfBirth.isNotEmpty() &&
                     (!isNewUser || userName.isNotEmpty())
         ) {
-            Text("Concluir", fontWeight = FontWeight.Bold)
+            if (isSaving) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text("Concluir", fontWeight = FontWeight.Bold)
+            }
         }
 
     }
