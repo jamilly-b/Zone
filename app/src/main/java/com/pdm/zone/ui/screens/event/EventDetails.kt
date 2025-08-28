@@ -12,7 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +36,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.ui.draw.clip
 import com.pdm.zone.BuildConfig
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,6 +117,17 @@ private fun EventDetailsContent(
     onInterestClick: () -> Unit,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
+    val dateFormatter = remember { SimpleDateFormat("dd 'de' MMMM", Locale("pt", "BR")) }
+    val formattedDate = remember(event.eventDate, event.startTime, event.endTime) {
+        event.eventDate?.let { date ->
+            val base = dateFormatter.format(date).replaceFirstChar { it.uppercase() }
+            if (event.startTime != null && event.endTime != null) {
+                "$base | ${event.startTime} - ${event.endTime}"
+            } else base
+        } ?: "Data não informada"
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -140,79 +152,123 @@ private fun EventDetailsContent(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
+                // Título
                 Text(
                     text = event.title,
                     style = MaterialTheme.typography.headlineLarge,
                     color = Primary,
+                    fontWeight = FontWeight.Bold
                 )
-
+                Spacer(modifier = Modifier.height(4.dp))
+                // Autor
+                Text(
+                    text = "Por @${event.creatorUsername}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Primary,
+                    modifier = Modifier.clickable { navController.navigate("profile/${event.creatorUsername}") }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                // Data (calendário)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = formattedDate,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(
-                            text = "${event.confirmedCount} Confirmados",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Secondary,
-                            modifier = Modifier.clickable {
-                                navController.navigate("userList/confirmados/${event.id}")
-                            }
-                        )
-                        Text(
-                            text = "${event.interestedCount} Interessados",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-
-                    // ------------------ Ícones provisórios ------------------
-                    Row {
-                        IconButton(onClick = onInterestClick) {
-                            Icon(
-                                imageVector = if (isInterested) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = if (isInterested) "Tenho Interesse" else "Remover dos Interesses",
-                                tint = if (isInterested) Primary else Color.Gray,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
+                // Local (ícone de casa + nome)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = event.location,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
-
-                Button(
-                    onClick = onConfirmClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isConfirmed) Primary else Color.LightGray,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(50),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
-                ) {
-                    Text("Eu vou")
-                }
-
                 Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onConfirmClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isConfirmed) Primary else Color.LightGray,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(50),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                    ) {
+                        Text("Eu vou")
+                    }
+                    IconButton(onClick = onInterestClick) {
+                        Icon(
+                            imageVector = if (isInterested) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isInterested) "Tenho Interesse" else "Remover dos Interesses",
+                            tint = if (isInterested) Primary else Color.Gray,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Métricas
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        text = "${event.confirmedCount} Confirmados",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Secondary,
+                        modifier = Modifier.clickable {
+                            navController.navigate("userList/confirmados/${event.id}")
+                        }
+                    )
+                    Text(
+                        text = "${event.interestedCount} Interessados",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Descrição",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Primary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = event.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 22.sp
+                    lineHeight = 24.sp,
+                    fontSize = 18.sp
                 )
-
                 Spacer(modifier = Modifier.height(24.dp))
-                EventInfoSection(event = event)
-                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Criado por @${event.creatorUsername}",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "Localização",
+                    style = MaterialTheme.typography.titleMedium,
                     color = Primary,
-                    modifier = Modifier.clickable {
-                        navController.navigate("profile/${event.creatorUsername}")
-                    }
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = event.location,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 EventLocationMap(event)
             }
         }
@@ -230,12 +286,6 @@ private fun EventLocationMap(event: Event) {
             .fillMaxWidth()
             .heightIn(min = 180.dp)
     ) {
-        Text(
-            text = "Localização",
-            style = MaterialTheme.typography.titleMedium,
-            color = Primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
         if (lat != null && lng != null) {
             var useFallback by remember { mutableStateOf(false) }
             val key = BuildConfig.PLACES_API_KEY
@@ -272,7 +322,6 @@ private fun EventLocationMap(event: Event) {
                             },
                             onError = { _, _ ->
                                 if (!useFallback) {
-                                    // Tenta trocar para OSM
                                     useFallback = true
                                 } else {
                                     hadError = true
@@ -308,54 +357,5 @@ private fun EventLocationMap(event: Event) {
                 color = Color.Gray
             )
         }
-    }
-}
-
-@Composable
-fun EventInfoSection(event: Event) {
-    val dateFormatter = remember { SimpleDateFormat("dd 'de' MMMM", Locale("pt", "BR")) }
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        EventInfoItem(
-            icon = Icons.Default.LocationOn,
-            text = event.location
-        )
-
-        event.eventDate?.let { date ->
-            val formattedDate = dateFormatter.format(date).replaceFirstChar { it.uppercase() }
-            val timeText = if (event.startTime != null && event.endTime != null) {
-                "$formattedDate | ${event.startTime} - ${event.endTime}"
-            } else {
-                formattedDate
-            }
-            EventInfoItem(
-                icon = Icons.Default.DateRange,
-                text = timeText
-            )
-        }
-    }
-}
-
-@Composable
-fun EventInfoItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = Color(0xFF8B5A96),
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }

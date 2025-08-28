@@ -2,7 +2,7 @@ package com.pdm.zone.ui.nav
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -46,7 +46,7 @@ sealed class BottomNavItem(
         BottomNavItem("Pesquisar", Icons.Default.Search, Route.Search)
 
     data object ListButton :
-        BottomNavItem("Próximos eventos", Icons.Default.Favorite, Route.List)
+        BottomNavItem("Próximos eventos", Icons.Default.DateRange, Route.List)
 
     data object ProfileButton :
         BottomNavItem("Perfil", Icons.Default.Person, Route.Profile)

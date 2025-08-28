@@ -19,10 +19,10 @@ import androidx.navigation.NavHostController
 import com.pdm.zone.data.model.EventCategory
 import com.pdm.zone.ui.components.EventCard
 import com.pdm.zone.ui.theme.Primary
-import com.pdm.zone.ui.nav.Route
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.WindowInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +41,7 @@ fun HomePage(
         topBar = {
             TopAppBar(
                 title = { /* vazio */ },
+                windowInsets = WindowInsets(0),
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
                 actions = {
                     // Ícones à direita
@@ -66,7 +67,7 @@ fun HomePage(
                         contentDescription = "Logo Zone",
                         modifier = Modifier
                             .padding(start = 12.dp)
-                            .size(100.dp)
+                            .size(80.dp)
                     )
                 }
             )
@@ -97,7 +98,7 @@ fun HomePage(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                             ) {
-                                items(EventCategory.values()) { category ->
+                                items(EventCategory.entries) { category ->
                                     FilterChip(
                                         selected = selectedCategory == category,
                                         onClick = {
