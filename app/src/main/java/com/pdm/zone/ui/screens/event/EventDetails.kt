@@ -2,8 +2,6 @@ package com.pdm.zone.ui.screens.event
 
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
-import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,8 +13,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,12 +28,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.MapsInitializer
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.pdm.zone.R
 import com.pdm.zone.data.model.Event
 import com.pdm.zone.ui.theme.Primary
@@ -45,7 +35,6 @@ import com.pdm.zone.ui.theme.Secondary
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.ui.draw.clip
-import com.google.android.gms.maps.GoogleMap
 import com.pdm.zone.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -236,17 +225,6 @@ private fun EventLocationMap(event: Event) {
     val lng = event.longitude
     val context = LocalContext.current
 
-//    // Logs de diagnóstico da chave
-//    LaunchedEffect(Unit) {
-//        val buildConfigKey = BuildConfig.PLACES_API_KEY
-//        val appInfo = try {
-//            context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
-//        } catch (e: Exception) { null }
-//        val manifestKey = appInfo?.metaData?.getString("com.google.android.geo.API_KEY")
-//        Log.d("MAPS_KEY_DEBUG", "BuildConfig.PLACES_API_KEY='${'$'}buildConfigKey'")
-//        Log.d("MAPS_KEY_DEBUG", "Manifest meta-data com.google.android.geo.API_KEY='${'$'}manifestKey'")
-//    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,31 +237,16 @@ private fun EventLocationMap(event: Event) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         if (lat != null && lng != null) {
-            val mapView = remember { MapView(context) }
-            // Lifecycle handling
-            DisposableEffect(mapView) {
-                mapView.onCreate(null)
-                mapView.onResume()
-                onDispose {
-                    mapView.onPause()
-                    mapView.onDestroy()
+            var useFallback by remember { mutableStateOf(false) }
+            val key = BuildConfig.PLACES_API_KEY
+            val staticMapUrl = remember(lat, lng, useFallback, key) {
+                if (useFallback || key.isBlank() || key == "YOUR_API_KEY") {
+                    "https://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lng&zoom=15&size=640x320&markers=$lat,$lng,red-pushpin"
+                } else {
+                    "https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng&zoom=15&size=640x320&scale=2&markers=color:red%7C$lat,$lng&key=$key"
                 }
             }
-            val target = remember(lat, lng) { LatLng(lat, lng) }
-            // Configure map once
-            LaunchedEffect(mapView, target) {
-                mapView.getMapAsync { googleMap: GoogleMap ->
-                    googleMap.uiSettings.isMapToolbarEnabled = false
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(target, 15f))
-                    googleMap.clear()
-                    googleMap.addMarker(
-                        MarkerOptions()
-                            .position(target)
-                            .title(event.title)
-                            .snippet(event.location)
-                    )
-                }
-            }
+            var hadError by remember { mutableStateOf(false) }
             fun openExternalMap() {
                 val gmmIntentUri = Uri.parse("geo:$lat,$lng?q=$lat,$lng(${Uri.encode(event.title.ifBlank { "Evento" })})")
                 val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply { setPackage("com.google.android.apps.maps") }
@@ -300,13 +263,41 @@ private fun EventLocationMap(event: Event) {
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { openExternalMap() }
             ) {
-                AndroidView(factory = { mapView }) { mView ->
-                    // Add listeners after map ready
-                    mView.getMapAsync { googleMap ->
-                        googleMap.setOnMapClickListener { openExternalMap() }
-                        googleMap.setOnMarkerClickListener {
-                            openExternalMap(); true
-                        }
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(staticMapUrl)
+                        .listener(
+                            onSuccess = { _, _ ->
+                                hadError = false
+                            },
+                            onError = { _, _ ->
+                                if (!useFallback) {
+                                    // Tenta trocar para OSM
+                                    useFallback = true
+                                } else {
+                                    hadError = true
+                                }
+                            }
+                        )
+                        .build(),
+                    contentDescription = "Mapa do evento",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.placeholder_event),
+                    error = painterResource(R.drawable.placeholder_event)
+                )
+                if (hadError) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Mapa indisponível",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
